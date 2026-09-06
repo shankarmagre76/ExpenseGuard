@@ -14,7 +14,9 @@ import java.util.UUID;
  * Transaction JPA entity representing financial transaction logs.
  */
 @Entity
-@Table(name = "transactions", indexes = {
+@Table(name = "transactions", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_transactions_user_client_op", columnNames = {"user_id", "client_operation_id"})
+}, indexes = {
         @Index(name = "idx_transactions_user_id", columnList = "user_id"),
         @Index(name = "idx_transactions_account_id", columnList = "account_id"),
         @Index(name = "idx_transactions_category_id", columnList = "category_id"),

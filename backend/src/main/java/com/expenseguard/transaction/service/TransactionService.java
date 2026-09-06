@@ -2,9 +2,11 @@ package com.expenseguard.transaction.service;
 
 import com.expenseguard.transaction.dto.TransactionRequest;
 import com.expenseguard.transaction.dto.TransactionResponse;
+import com.expenseguard.transaction.entity.TransactionType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,6 +23,26 @@ public interface TransactionService {
      * @return Created TransactionResponse DTO
      */
     TransactionResponse createTransaction(TransactionRequest request);
+
+    /**
+     * Retrieves paginated transactions belonging to the currently authenticated user with optional filters.
+     *
+     * @param type Transaction type filter (optional)
+     * @param accountId Account ID filter (optional)
+     * @param categoryId Category ID filter (optional)
+     * @param fromDate Start date filter (optional)
+     * @param toDate End date filter (optional)
+     * @param pageable Pagination and sorting options
+     * @return Page of TransactionResponse DTOs
+     */
+    Page<TransactionResponse> getAllTransactionsForCurrentUser(
+            TransactionType type,
+            UUID accountId,
+            UUID categoryId,
+            LocalDate fromDate,
+            LocalDate toDate,
+            Pageable pageable
+    );
 
     /**
      * Retrieves paginated transactions belonging to the currently authenticated user.

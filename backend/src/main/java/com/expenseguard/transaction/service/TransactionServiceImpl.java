@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -88,10 +89,19 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<TransactionResponse> getAllTransactionsForCurrentUser(Pageable pageable) {
+    public Page<TransactionResponse> getAllTransactionsForCurrentUser(
+            TransactionType type, UUID accountId, UUID categoryId, LocalDate fromDate, LocalDate toDate, Pageable pageable) {
         UUID currentUserId = currentUserService.getCurrentUserId();
-        Page<Transaction> pageResult = transactionRepository.findAllByUserId(currentUserId, pageable);
+        Page<Transaction> pageResult = transactionRepository.findFilteredTransactions(
+                currentUserId, type, accountId, categoryId, fromDate, toDate, pageable
+        );
         return pageResult.map(this::mapToResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<TransactionResponse> getAllTransactionsForCurrentUser(Pageable pageable) {
+        return getAllTransactionsForCurrentUser(null, null, null, null, null, pageable);
     }
 
     @Override
