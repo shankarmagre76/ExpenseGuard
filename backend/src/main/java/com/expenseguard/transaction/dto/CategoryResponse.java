@@ -1,30 +1,26 @@
 package com.expenseguard.transaction.dto;
 
-import com.expenseguard.transaction.entity.AccountType;
+import com.expenseguard.transaction.entity.CategoryType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Data Transfer Object representing Account response information.
+ * Data Transfer Object representing Category response payload.
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AccountResponse {
+public class CategoryResponse {
 
     private UUID id;
-    private UUID userId;
     private String name;
-    private AccountType type;
-    private BigDecimal balance;
-    private String currency;
+    private CategoryType type;
     private Instant createdAt;
     private Instant updatedAt;
 }

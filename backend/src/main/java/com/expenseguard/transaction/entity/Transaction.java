@@ -6,6 +6,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -13,7 +14,13 @@ import java.util.UUID;
  * Transaction JPA entity representing financial transaction logs.
  */
 @Entity
-@Table(name = "transactions")
+@Table(name = "transactions", indexes = {
+        @Index(name = "idx_transactions_user_id", columnList = "user_id"),
+        @Index(name = "idx_transactions_account_id", columnList = "account_id"),
+        @Index(name = "idx_transactions_category_id", columnList = "category_id"),
+        @Index(name = "idx_transactions_transaction_date", columnList = "transaction_date"),
+        @Index(name = "idx_transactions_user_client_op", columnList = "user_id, client_operation_id")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -45,14 +52,36 @@ public class Transaction {
     @Column(name = "amount", nullable = false, precision = 19, scale = 4)
     private BigDecimal amount;
 
-    @Column(name = "occurred_at", nullable = false)
-    private Instant occurredAt;
+    @Column(name = "transaction_date", nullable = false)
+    private LocalDate transactionDate;
+
+    @Column(name = "description", length = 255)
+    private String description;
+
+    @Column(name = "client_operation_id", length = 100)
+    private String clientOperationId;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
 
     @PrePersist
     protected void onCreate() {
-        if (this.occurredAt == null) {
-            this.occurredAt = Instant.now();
+        Instant now = Instant.now();
+        if (this.createdAt == null) {
+            this.createdAt = now;
         }
+        this.updatedAt = now;
+        if (this.transactionDate == null) {
+            this.transactionDate = LocalDate.now();
+        }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = Instant.now();
     }
 
     @Override

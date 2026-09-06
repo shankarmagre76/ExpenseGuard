@@ -4,6 +4,7 @@ import com.expenseguard.auth.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -11,7 +12,9 @@ import java.util.UUID;
  * Category JPA entity representing expense or income category tags.
  */
 @Entity
-@Table(name = "categories")
+@Table(name = "categories", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_categories_user_name_type", columnNames = {"user_id", "name", "type"})
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -34,6 +37,26 @@ public class Category {
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false, length = 30)
     private CategoryType type;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        Instant now = Instant.now();
+        if (this.createdAt == null) {
+            this.createdAt = now;
+        }
+        this.updatedAt = now;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = Instant.now();
+    }
 
     @Override
     public boolean equals(Object o) {

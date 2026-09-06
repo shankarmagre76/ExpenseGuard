@@ -9,15 +9,20 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Spring Data JPA Repository for Account entities.
+ * Spring Data JPA Repository for Account entities with user-ownership querying capabilities.
  */
 @Repository
 public interface AccountRepository extends JpaRepository<Account, UUID> {
 
     /**
-     * Find all accounts associated with a given user ID.
+     * Find all accounts owned by a given user ID.
      */
     List<Account> findByUserId(UUID userId);
+
+    /**
+     * Find all accounts owned by a given user ID (alias for strict ownership naming).
+     */
+    List<Account> findAllByUserId(UUID userId);
 
     /**
      * Find specific account owned by a given user ID.

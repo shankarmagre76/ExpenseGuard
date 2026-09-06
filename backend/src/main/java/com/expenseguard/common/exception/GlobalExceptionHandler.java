@@ -42,17 +42,34 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles duplicate resource creation exceptions (e.g. duplicate email).
+     * Handles duplicate resource creation exceptions (e.g. duplicate email, duplicate category).
      */
-    @ExceptionHandler(EmailAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
-        log.warn("Registration attempt failed due to duplicate email: {}", ex.getMessage());
+    @ExceptionHandler({EmailAlreadyExistsException.class, CategoryAlreadyExistsException.class})
+    public ResponseEntity<ErrorResponse> handleEmailAlreadyExists(Exception ex) {
+        log.warn("Resource creation failed due to duplicate entry: {}", ex.getMessage());
 
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(Instant.now().toString())
                 .status(HttpStatus.CONFLICT.value())
                 .error(HttpStatus.CONFLICT.getReasonPhrase())
                 .message(ex.getMessage())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
+
+    /**
+     * Handles database data integrity constraint violations.
+     */
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(org.springframework.dao.DataIntegrityViolationException ex) {
+        log.warn("Data integrity violation: {}", ex.getMessage());
+
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(Instant.now().toString())
+                .status(HttpStatus.CONFLICT.value())
+                .error(HttpStatus.CONFLICT.getReasonPhrase())
+                .message("A duplicate record already exists or database constraint was violated")
                 .build();
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
