@@ -22,4 +22,14 @@ public interface UserRepository extends JpaRepository<User, UUID> {
      * Check if a user exists with the given email address.
      */
     boolean existsByEmail(String email);
+
+    /**
+     * Check if a user exists with the given email address, ignoring case.
+     */
+    boolean existsByEmailIgnoreCase(String email);
+
+    /**
+     * Find a user by their email address ignoring case.
+     */
+    Optional<User> findByEmailIgnoreCase(String email);
 }

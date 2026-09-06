@@ -15,7 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("dev")
+@ActiveProfiles("test")
 class SecurityConfigTest {
 
     @Autowired
@@ -34,7 +34,7 @@ class SecurityConfigTest {
     @Test
     void protectedEndpoint_RequiresAuthentication() throws Exception {
         mockMvc.perform(get("/api/v1/protected-resource"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

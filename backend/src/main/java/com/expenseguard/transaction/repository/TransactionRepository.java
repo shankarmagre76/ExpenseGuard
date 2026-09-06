@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -17,6 +18,11 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
      * Find all transactions owned by a given user ID.
      */
     List<Transaction> findByUserId(UUID userId);
+
+    /**
+     * Find specific transaction owned by a given user ID.
+     */
+    Optional<Transaction> findByIdAndUserId(UUID id, UUID userId);
 
     /**
      * Find all transactions associated with a specific account ID.
