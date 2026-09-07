@@ -42,4 +42,8 @@ expenseguard:
   jwt:
     secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
     expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+  receipt:
+    storage-path: ${RECEIPT_STORAGE_PATH:./uploads/receipts}
+    max-file-size-mb: ${RECEIPT_MAX_SIZE_MB:10}
+
 
