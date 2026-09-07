@@ -259,6 +259,7 @@ public class TransactionServiceImpl implements TransactionService {
                 .transactionDate(transaction.getTransactionDate())
                 .description(transaction.getDescription())
                 .clientOperationId(transaction.getClientOperationId())
+                .version(transaction.getVersion())
                 .createdAt(transaction.getCreatedAt())
                 .updatedAt(transaction.getUpdatedAt())
                 .build();

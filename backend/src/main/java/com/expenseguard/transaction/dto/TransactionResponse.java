@@ -29,6 +29,7 @@ public class TransactionResponse {
     private LocalDate transactionDate;
     private String description;
     private String clientOperationId;
+    private Long version;
     private Instant createdAt;
     private Instant updatedAt;
 }

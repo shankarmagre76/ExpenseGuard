@@ -216,9 +216,100 @@ Authorization: Bearer <JWT_TOKEN>
 
 ---
 
+### Offline Synchronization Endpoints (`/api/v1/sync`)
+
+#### 1. Single Transaction Synchronization
+- **Method**: `POST /api/v1/sync/transactions`
+- **Status**: `200 OK` (Processed) or `409 Conflict` (Version Conflict or Payload Mismatch)
+- **Request Body**:
+```json
+{
+  "clientOperationId": "mobile-abc-123",
+  "operationType": "CREATE",
+  "transactionId": null,
+  "accountId": "a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+  "categoryId": "f1e2d3c4-b5a6-7890-abcd-0987654321ba",
+  "type": "EXPENSE",
+  "amount": 500.00,
+  "transactionDate": "2026-09-07",
+  "description": "Lunch"
+}
+```
+- **UPDATE Request (with versioning)**:
+```json
+{
+  "clientOperationId": "mobile-update-456",
+  "operationType": "UPDATE",
+  "transactionId": "b1c2d3e4-f5a6-7890-abcd-112233445566",
+  "version": 2,
+  "accountId": "a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+  "categoryId": "f1e2d3c4-b5a6-7890-abcd-0987654321ba",
+  "type": "EXPENSE",
+  "amount": 600.00,
+  "transactionDate": "2026-09-07"
+}
+```
+- **PROCESSED Response Body**:
+```json
+{
+  "clientOperationId": "mobile-abc-123",
+  "status": "PROCESSED",
+  "transactionId": "b1c2d3e4-f5a6-7890-abcd-112233445566",
+  "serverVersion": 0,
+  "message": "Transaction synchronized successfully"
+}
+```
+- **CONFLICT Response Body (409 Conflict)**:
+```json
+{
+  "clientOperationId": "mobile-update-456",
+  "status": "CONFLICT",
+  "transactionId": "b1c2d3e4-f5a6-7890-abcd-112233445566",
+  "serverVersion": 3,
+  "errorCode": "TRANSACTION_CONFLICT",
+  "message": "The transaction was modified on the server."
+}
+```
+
+#### 2. Batch Synchronization
+- **Method**: `POST /api/v1/sync/transactions/batch`
+- **Status**: `200 OK`
+- **Request Body**:
+```json
+{
+  "operations": [
+    {
+      "clientOperationId": "mobile-op-1",
+      "operationType": "CREATE",
+      "accountId": "a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+      "categoryId": "f1e2d3c4-b5a6-7890-abcd-0987654321ba",
+      "type": "EXPENSE",
+      "amount": 100.00,
+      "transactionDate": "2026-09-07"
+    }
+  ]
+}
+```
+
+#### 3. Sync Status Lookup
+- **Method**: `GET /api/v1/sync/status/{clientOperationId}`
+- **Status**: `200 OK`
+
+---
+
+### Sync Architecture & Design Principles
+- **Offline Operations**: Mobile clients generate unique `clientOperationId` UUIDs while offline and send sync operations upon reconnecting.
+- **Idempotency & Payload Hashing**: SHA-256 payload hashing ensures retries with identical `clientOperationId` return recorded results without duplicate transactions or balance changes. Mismatched payloads under the same operation ID return `409 Conflict` (`SYNC_OPERATION_PAYLOAD_MISMATCH`).
+- **Optimistic Locking**: Transactions use `@Version` fields. UPDATE requests verify `version`. Stale client versions return `409 Conflict` (`TRANSACTION_CONFLICT`).
+- **Explicit Conflict Resolution**: Financial data strictly rejects "last write wins". Server state is preserved on conflict, allowing client applications to resolve explicitly.
+- **Security & Authorization**: All operations enforce JWT authentication and verify user ownership of accounts, categories, transactions, and sync records.
+
+---
+
 ### Error Responses
 - `401 Unauthorized`: Missing or invalid JWT.
 - `403 Forbidden`: Accessing or referencing another user's resource.
-- `404 Not Found`: Nonexistent resource ID.
-- `400 Bad Request`: Validation error, invalid month, or category/type mismatch.
-- `409 Conflict`: Unique constraint violation (duplicate category, budget, or operation ID).
+- `404 Not Found`: Nonexistent resource ID or sync operation.
+- `400 Bad Request`: Validation error, invalid month, missing date/version/operationId, or category/type mismatch.
+- `409 Conflict`: Unique constraint violation, payload hash mismatch, or optimistic lock version conflict.
+
