@@ -41,7 +41,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Integration Test suite verifying Phase 4.1 Budget Management requirements.
  * Covers 30 comprehensive test scenarios for Budget creation, security, utilization math, and validation.
  */
-@SpringBootTest
+import com.expenseguard.ExpenseGuardApplication;
+
+@SpringBootTest(classes = ExpenseGuardApplication.class)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class BudgetIntegrationTest {

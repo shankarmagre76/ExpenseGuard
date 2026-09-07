@@ -39,7 +39,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Integration Test suite verifying Phase 3.3 Transactions Management requirements.
  */
-@SpringBootTest
+import com.expenseguard.ExpenseGuardApplication;
+
+@SpringBootTest(classes = ExpenseGuardApplication.class)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class TransactionIntegrationTest {

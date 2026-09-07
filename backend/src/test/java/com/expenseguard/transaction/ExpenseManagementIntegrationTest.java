@@ -39,7 +39,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Integration Test suite verifying Phase 3.4 Expense Management Integration & Finalization requirements.
  * Covers 30 comprehensive integration test scenarios for Accounts, Categories, and Transactions.
  */
-@SpringBootTest
+import com.expenseguard.ExpenseGuardApplication;
+
+@SpringBootTest(classes = ExpenseGuardApplication.class)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class ExpenseManagementIntegrationTest {

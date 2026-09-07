@@ -313,3 +313,25 @@ Authorization: Bearer <JWT_TOKEN>
 - `400 Bad Request`: Validation error, invalid month, missing date/version/operationId, or category/type mismatch.
 - `409 Conflict`: Unique constraint violation, payload hash mismatch, or optimistic lock version conflict.
 
+---
+
+## Testing & Quality Assurance
+
+ExpenseGuard incorporates a multi-tiered test suite ensuring security isolation, financial accuracy, input validation, and offline idempotency.
+
+### Running Tests
+Execute the complete test suite:
+```powershell
+.\mvnw.cmd clean test
+```
+
+### Test Suite Architecture
+- **Integration Testing**: End-to-end REST API verification using MockMvc and Spring Boot test context.
+- **Unit Testing**: Focused unit tests for deterministic business rules (`SyncServiceImpl`, `BudgetServiceImpl`).
+- **Security Testing**: Verification of missing, malformed, expired, and tampered JWT tokens, invalid auth schemes, IDOR cross-user protection, and password hash concealment.
+- **Validation & Boundary Testing**: Testing boundary amounts (`0`, negative, `0.01`, `999999.99`), long descriptions (`255` vs `256`), and pagination bounds (`size > 100` capped).
+- **Financial Consistency & Invariants**: Enforces `Account.balance == Initial + sum(INCOME) - sum(EXPENSE)` with exact `BigDecimal` decimal math.
+- **Idempotency & Optimistic Locking**: Ensures zero duplicate transactions/balance changes on retries, SHA-256 payload consistency, and `@Version` conflict rejection (`409 Conflict`).
+- **Receipt OCR & Storage Security**: Path traversal prevention (`../../etc/passwd`), file size bounds (>10MB), and physical file deletion cleanup.
+
+

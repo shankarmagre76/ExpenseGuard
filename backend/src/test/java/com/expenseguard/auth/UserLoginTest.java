@@ -31,7 +31,9 @@ import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
+import com.expenseguard.ExpenseGuardApplication;
+
+@SpringBootTest(classes = ExpenseGuardApplication.class)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class UserLoginTest {

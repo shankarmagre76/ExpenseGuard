@@ -26,7 +26,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Integration Test suite verifying Phase 2.5 Authorization and Resource Ownership Security requirements.
  */
-@SpringBootTest
+import com.expenseguard.ExpenseGuardApplication;
+
+@SpringBootTest(classes = ExpenseGuardApplication.class)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class ResourceOwnershipSecurityTest {

@@ -47,7 +47,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Verifies 35 key test scenarios including file validation, secure storage, OCR extraction,
  * data confirmation, security isolation, physical file cleanup, and transaction decoupling.
  */
-@SpringBootTest
+import com.expenseguard.ExpenseGuardApplication;
+
+@SpringBootTest(classes = ExpenseGuardApplication.class)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class ReceiptIntegrationTest {

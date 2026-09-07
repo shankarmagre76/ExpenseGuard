@@ -37,6 +37,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+import com.expenseguard.ExpenseGuardApplication;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -46,7 +47,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Integration test suite verifying Phase 5.3 Offline Synchronization & Conflict Handling requirements.
  */
-@SpringBootTest
+@SpringBootTest(classes = ExpenseGuardApplication.class)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class SyncIntegrationTest {

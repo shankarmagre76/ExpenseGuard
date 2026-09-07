@@ -49,7 +49,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Integration Test suite verifying Phase 5.1 Recurring Transactions requirements.
  * Covers 35 test scenarios including CRUD, validation, authorization, recurrence rules, idempotency, and execution.
  */
-@SpringBootTest
+import com.expenseguard.ExpenseGuardApplication;
+
+@SpringBootTest(classes = ExpenseGuardApplication.class)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class RecurringTransactionIntegrationTest {

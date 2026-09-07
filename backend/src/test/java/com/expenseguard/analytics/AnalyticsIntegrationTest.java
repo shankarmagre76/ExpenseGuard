@@ -38,7 +38,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Comprehensive integration test suite for Phase 4.2 Analytics & Financial Insights module.
  * Validates 30 key scenarios covering financial summaries, projections, validation, security, and edge cases.
  */
-@SpringBootTest
+import com.expenseguard.ExpenseGuardApplication;
+
+@SpringBootTest(classes = ExpenseGuardApplication.class)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class AnalyticsIntegrationTest {
