@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +25,25 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
      * Find all transactions owned by a given user ID with pagination support.
      */
     Page<Transaction> findAllByUserId(UUID userId, Pageable pageable);
+
+    /**
+     * Calculates total spent amount for a specific user, category, and date range for EXPENSE type.
+     */
+    @Query("""
+        SELECT COALESCE(SUM(t.amount), 0)
+        FROM Transaction t
+        WHERE t.user.id = :userId
+          AND t.category.id = :categoryId
+          AND t.type = com.expenseguard.transaction.entity.TransactionType.EXPENSE
+          AND t.transactionDate >= :startDate
+          AND t.transactionDate <= :endDate
+    """)
+    BigDecimal calculateSpentAmount(
+            @Param("userId") UUID userId,
+            @Param("categoryId") UUID categoryId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
 
     /**
      * Find all transactions owned by a given user ID with optional filters.
@@ -76,4 +96,63 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
      * Find all transactions categorized under a specific category ID.
      */
     List<Transaction> findByCategoryId(UUID categoryId);
+
+    /**
+     * Calculates total transaction amount for a user, type, and date range.
+     */
+    @Query("""
+        SELECT COALESCE(SUM(t.amount), 0)
+        FROM Transaction t
+        WHERE t.user.id = :userId
+          AND t.type = :type
+          AND t.transactionDate >= :startDate
+          AND t.transactionDate <= :endDate
+    """)
+    BigDecimal calculateTotalByUserIdAndTypeAndDateRange(
+            @Param("userId") UUID userId,
+            @Param("type") TransactionType type,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+    /**
+     * Aggregate expense transactions grouped by category for a user and date range.
+     */
+    @Query("""
+        SELECT t.category.id AS categoryId,
+               t.category.name AS categoryName,
+               SUM(t.amount) AS amount
+        FROM Transaction t
+        WHERE t.user.id = :userId
+          AND t.type = com.expenseguard.transaction.entity.TransactionType.EXPENSE
+          AND t.transactionDate >= :startDate
+          AND t.transactionDate <= :endDate
+        GROUP BY t.category.id, t.category.name
+        ORDER BY SUM(t.amount) DESC
+    """)
+    List<com.expenseguard.analytics.projection.CategoryExpenseProjection> findCategoryExpensesByUserIdAndDateRange(
+            @Param("userId") UUID userId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+    /**
+     * Aggregate total income and expense grouped by account for a user and date range.
+     */
+    @Query("""
+        SELECT t.account.id AS accountId,
+               t.account.name AS accountName,
+               SUM(CASE WHEN t.type = com.expenseguard.transaction.entity.TransactionType.INCOME THEN t.amount ELSE 0 END) AS totalIncome,
+               SUM(CASE WHEN t.type = com.expenseguard.transaction.entity.TransactionType.EXPENSE THEN t.amount ELSE 0 END) AS totalExpense
+        FROM Transaction t
+        WHERE t.user.id = :userId
+          AND t.transactionDate >= :startDate
+          AND t.transactionDate <= :endDate
+        GROUP BY t.account.id, t.account.name
+    """)
+    List<com.expenseguard.analytics.projection.AccountSummaryProjection> findAccountSummariesByUserIdAndDateRange(
+            @Param("userId") UUID userId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
 }

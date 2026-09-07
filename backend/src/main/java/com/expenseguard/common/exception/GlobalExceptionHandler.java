@@ -42,9 +42,9 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles duplicate resource creation exceptions (e.g. duplicate email, duplicate category).
+     * Handles duplicate resource creation exceptions (e.g. duplicate email, duplicate category, duplicate budget).
      */
-    @ExceptionHandler({EmailAlreadyExistsException.class, CategoryAlreadyExistsException.class})
+    @ExceptionHandler({EmailAlreadyExistsException.class, CategoryAlreadyExistsException.class, BudgetAlreadyExistsException.class})
     public ResponseEntity<ErrorResponse> handleEmailAlreadyExists(Exception ex) {
         log.warn("Resource creation failed due to duplicate entry: {}", ex.getMessage());
 

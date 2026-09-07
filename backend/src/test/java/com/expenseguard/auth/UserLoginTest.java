@@ -48,11 +48,27 @@ class UserLoginTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private com.expenseguard.budget.repository.BudgetRepository budgetRepository;
+
+    @Autowired
+    private com.expenseguard.transaction.repository.TransactionRepository transactionRepository;
+
+    @Autowired
+    private com.expenseguard.transaction.repository.CategoryRepository categoryRepository;
+
+    @Autowired
+    private com.expenseguard.transaction.repository.AccountRepository accountRepository;
+
     @Value("${expenseguard.jwt.secret:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}")
     private String secretKey;
 
     @BeforeEach
     void setUp() {
+        budgetRepository.deleteAll();
+        transactionRepository.deleteAll();
+        categoryRepository.deleteAll();
+        accountRepository.deleteAll();
         userRepository.deleteAll();
     }
 

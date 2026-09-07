@@ -1,15 +1,75 @@
 # ExpenseGuard Backend
 
-ExpenseGuard is a enterprise-grade, portfolio-quality RESTful backend service built with Spring Boot 3, Java 21, PostgreSQL, and Spring Security with JWT authentication.
+ExpenseGuard is an enterprise-grade, portfolio-quality RESTful backend service built with Spring Boot 3, Java 21, PostgreSQL, and Spring Security with JWT authentication.
 
-## Expense Management API Specification
+## API Specification
 
 ### Authentication
-All endpoints under `/api/v1/accounts`, `/api/v1/categories`, and `/api/v1/transactions` require a valid JWT bearer token in the `Authorization` header:
+All protected endpoints under `/api/v1/accounts`, `/api/v1/categories`, `/api/v1/transactions`, and `/api/v1/budgets` require a valid JWT bearer token in the `Authorization` header:
 
 ```http
 Authorization: Bearer <JWT_TOKEN>
 ```
+
+---
+
+### Budgets Endpoints (`/api/v1/budgets`)
+
+#### 1. Create Budget
+- **Method**: `POST /api/v1/budgets`
+- **Status**: `201 Created`
+- **Request Body**:
+```json
+{
+  "categoryId": "f1e2d3c4-b5a6-7890-abcd-0987654321ba",
+  "amount": 10000.00,
+  "month": "2026-09"
+}
+```
+- **Validation Rules**:
+  - `categoryId`: Required (UUID). Must belong to the authenticated user and be an `EXPENSE` category.
+  - `amount`: Required (`BigDecimal > 0`).
+  - `month`: Required (`YYYY-MM`). Must be a valid year-month string.
+  - **Uniqueness**: Only 1 budget allocation allowed per user + category + month (`409 Conflict` on duplicate).
+
+- **Response Body**:
+```json
+{
+  "id": "b1c2d3e4-f5a6-7890-abcd-112233445566",
+  "categoryId": "f1e2d3c4-b5a6-7890-abcd-0987654321ba",
+  "categoryName": "Food",
+  "month": "2026-09",
+  "amount": 10000.00,
+  "budgetAmount": 10000.00,
+  "spentAmount": 7500.00,
+  "remainingAmount": 2500.00,
+  "utilizationPercentage": 75.00,
+  "createdAt": "2026-09-07T00:00:00Z",
+  "updatedAt": "2026-09-07T00:00:00Z"
+}
+```
+
+#### 2. Get All Budgets (Filtered)
+- **Method**: `GET /api/v1/budgets`
+- **Status**: `200 OK`
+- **Query Parameters**:
+  - `month` (Optional): `YYYY-MM` (e.g. `?month=2026-09`)
+
+#### 3. Get Budget by ID
+- **Method**: `GET /api/v1/budgets/{id}`
+- **Status**: `200 OK`
+
+#### 4. Get Budget Summary
+- **Method**: `GET /api/v1/budgets/{id}/summary`
+- **Status**: `200 OK`
+
+#### 5. Update Budget
+- **Method**: `PUT /api/v1/budgets/{id}`
+- **Status**: `200 OK`
+
+#### 6. Delete Budget
+- **Method**: `DELETE /api/v1/budgets/{id}`
+- **Status**: `204 No Content`
 
 ---
 
@@ -30,14 +90,6 @@ Authorization: Bearer <JWT_TOKEN>
   "clientOperationId": "op-123456789"
 }
 ```
-- **Validation Rules**:
-  - `accountId`: Required (UUID). Must belong to the authenticated user.
-  - `categoryId`: Required (UUID). Must belong to the authenticated user.
-  - `type`: Required (`EXPENSE` or `INCOME`). Must be compatible with the category type.
-  - `amount`: Required (`BigDecimal > 0`).
-  - `transactionDate`: Required (`YYYY-MM-DD`).
-  - `description`: Optional (max 255 characters).
-  - `clientOperationId`: Optional (max 100 characters). Enforces retry idempotency per user.
 
 #### 2. Get Transactions (Paginated & Filtered)
 - **Method**: `GET /api/v1/transactions`
@@ -50,42 +102,69 @@ Authorization: Bearer <JWT_TOKEN>
   - `toDate`: `YYYY-MM-DD`
   - `page`: Integer (default `0`)
   - `size`: Integer (default `20`, capped server-side at `100`)
-- **Response**:
+
+---
+
+### Analytics Endpoints (`/api/v1/analytics`)
+
+#### 1. Monthly Financial Summary
+- **Method**: `GET /api/v1/analytics/monthly`
+- **Status**: `200 OK`
+- **Query Parameters**: `month` (Optional, default current month `YYYY-MM`)
+- **Response Body**:
 ```json
 {
-  "content": [
-    {
-      "id": "11223344-5566-7788-9900-aabbccddeeff",
-      "accountId": "a1b2c3d4-e5f6-7890-abcd-1234567890ab",
-      "categoryId": "f1e2d3c4-b5a6-7890-abcd-0987654321ba",
-      "categoryName": "Food",
-      "type": "EXPENSE",
-      "amount": 450.50,
-      "transactionDate": "2026-09-06",
-      "description": "Groceries",
-      "clientOperationId": "op-123456789",
-      "createdAt": "2026-09-06T23:30:00Z",
-      "updatedAt": "2026-09-06T23:30:00Z"
-    }
-  ],
-  "totalElements": 1,
-  "totalPages": 1,
-  "size": 20,
-  "number": 0
+  "month": "2026-09",
+  "totalIncome": 50000.00,
+  "totalExpense": 15000.00,
+  "netSavings": 35000.00,
+  "savingsRate": 70.00
 }
 ```
 
-#### 3. Get Transaction by ID
-- **Method**: `GET /api/v1/transactions/{id}`
+#### 2. Category Expense Breakdown
+- **Method**: `GET /api/v1/analytics/categories`
 - **Status**: `200 OK`
+- **Query Parameters**: `month` (Optional, default current month `YYYY-MM`)
+- **Response Body**:
+```json
+{
+  "month": "2026-09",
+  "totalExpense": 15000.00,
+  "categories": [
+    {
+      "categoryId": "f1e2d3c4-b5a6-7890-abcd-0987654321ba",
+      "categoryName": "Food & Dining",
+      "amount": 10000.00,
+      "percentage": 66.67
+    }
+  ]
+}
+```
 
-#### 4. Update Transaction
-- **Method**: `PUT /api/v1/transactions/{id}`
+#### 3. Account Cashflow Breakdown
+- **Method**: `GET /api/v1/analytics/accounts`
 - **Status**: `200 OK`
+- **Query Parameters**: `month` (Optional, default current month `YYYY-MM`)
 
-#### 5. Delete Transaction
-- **Method**: `DELETE /api/v1/transactions/{id}`
-- **Status**: `204 No Content`
+#### 4. Top Spending Categories
+- **Method**: `GET /api/v1/analytics/top-categories`
+- **Status**: `200 OK`
+- **Query Parameters**:
+  - `month` (Optional, `YYYY-MM`)
+  - `limit` (Optional, Integer `1` to `20`, default `5`)
+
+#### 5. Budget vs Actual Performance
+- **Method**: `GET /api/v1/analytics/budget-performance`
+- **Status**: `200 OK`
+- **Query Parameters**: `month` (Optional, default current month `YYYY-MM`)
+
+#### 6. Multi-Month Financial Trend
+- **Method**: `GET /api/v1/analytics/trend`
+- **Status**: `200 OK`
+- **Query Parameters**:
+  - `from` (Optional, `YYYY-MM`)
+  - `to` (Optional, `YYYY-MM`)
 
 ---
 
@@ -93,5 +172,5 @@ Authorization: Bearer <JWT_TOKEN>
 - `401 Unauthorized`: Missing or invalid JWT.
 - `403 Forbidden`: Accessing or referencing another user's resource.
 - `404 Not Found`: Nonexistent resource ID.
-- `400 Bad Request`: Validation error or category/type mismatch.
-- `409 Conflict`: Unique constraint violation.
+- `400 Bad Request`: Validation error, invalid month, or category/type mismatch.
+- `409 Conflict`: Unique constraint violation (duplicate category, budget, or operation ID).

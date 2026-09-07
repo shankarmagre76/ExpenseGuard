@@ -46,6 +46,15 @@ class ResourceOwnershipSecurityTest {
     @Autowired
     private JwtService jwtService;
 
+    @Autowired
+    private com.expenseguard.budget.repository.BudgetRepository budgetRepository;
+
+    @Autowired
+    private com.expenseguard.transaction.repository.TransactionRepository transactionRepository;
+
+    @Autowired
+    private com.expenseguard.transaction.repository.CategoryRepository categoryRepository;
+
     private User userA;
     private User userB;
     private Account accountA;
@@ -55,6 +64,9 @@ class ResourceOwnershipSecurityTest {
 
     @BeforeEach
     void setUp() {
+        budgetRepository.deleteAll();
+        transactionRepository.deleteAll();
+        categoryRepository.deleteAll();
         accountRepository.deleteAll();
         userRepository.deleteAll();
 

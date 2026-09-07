@@ -37,10 +37,26 @@ class UserRegistrationTest {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
+    private com.expenseguard.budget.repository.BudgetRepository budgetRepository;
+
+    @Autowired
+    private com.expenseguard.transaction.repository.TransactionRepository transactionRepository;
+
+    @Autowired
+    private com.expenseguard.transaction.repository.CategoryRepository categoryRepository;
+
+    @Autowired
+    private com.expenseguard.transaction.repository.AccountRepository accountRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
+        budgetRepository.deleteAll();
+        transactionRepository.deleteAll();
+        categoryRepository.deleteAll();
+        accountRepository.deleteAll();
         userRepository.deleteAll();
     }
 
