@@ -168,6 +168,54 @@ Authorization: Bearer <JWT_TOKEN>
 
 ---
 
+### Recurring Transactions Endpoints (`/api/v1/recurring-transactions`)
+
+#### 1. Create Recurring Transaction
+- **Method**: `POST /api/v1/recurring-transactions`
+- **Status**: `201 Created`
+- **Request Body**:
+```json
+{
+  "accountId": "a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+  "categoryId": "f1e2d3c4-b5a6-7890-abcd-0987654321ba",
+  "type": "EXPENSE",
+  "amount": 15000.00,
+  "description": "Monthly House Rent",
+  "frequency": "MONTHLY",
+  "startDate": "2026-09-01",
+  "nextRunDate": "2026-09-01",
+  "endDate": "2027-08-31"
+}
+```
+
+#### 2. Get All Recurring Transactions
+- **Method**: `GET /api/v1/recurring-transactions`
+- **Status**: `200 OK`
+
+#### 3. Get Recurring Transaction by ID
+- **Method**: `GET /api/v1/recurring-transactions/{id}`
+- **Status**: `200 OK`
+
+#### 4. Update Recurring Transaction
+- **Method**: `PUT /api/v1/recurring-transactions/{id}`
+- **Status**: `200 OK`
+
+#### 5. Delete Recurring Transaction
+- **Method**: `DELETE /api/v1/recurring-transactions/{id}`
+- **Status**: `204 No Content`
+
+#### 6. Toggle Active Status
+- **Method**: `PUT /api/v1/recurring-transactions/{id}/status`
+- **Status**: `200 OK`
+- **Request Body**: `{"active": false}`
+
+#### 7. Manual Trigger Execution (Testing / Portfolio Demo)
+- **Method**: `POST /api/v1/recurring-transactions/{id}/execute`
+- **Status**: `200 OK`
+- **Response Body**: `{"message": "Execution triggered successfully", "executedCount": 1}`
+
+---
+
 ### Error Responses
 - `401 Unauthorized`: Missing or invalid JWT.
 - `403 Forbidden`: Accessing or referencing another user's resource.
