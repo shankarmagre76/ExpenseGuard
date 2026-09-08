@@ -381,5 +381,32 @@ docker compose down
 - **Public Health Endpoint**: `http://localhost:8081/api/v1/health`
 - **Actuator Health Endpoint**: `http://localhost:8081/actuator/health`
 
+---
+
+## CI/CD & Deployment
+
+ExpenseGuard utilizes GitHub Actions for continuous integration and automated quality assurance.
+
+### Continuous Integration Pipeline (`.github/workflows/ci.yml`)
+
+The CI workflow automatically triggers on every `push` and `pull_request` to the `main` branch.
+
+#### Pipeline Steps:
+1. **Source Code Checkout**: Pulls the target commit repository state (`actions/checkout@v4`).
+2. **Java 21 JDK Setup**: Configures Eclipse Temurin JDK 21 with automatic Maven dependency caching (`actions/setup-java@v4`).
+3. **Execution Permissions**: Grants executable flags (`chmod +x`) to `mvnw` and helper scripts.
+4. **Automated Testing**: Runs the complete unit and integration test suite (`./mvnw clean test`).
+5. **Artifact Packaging**: Compiles and packages the executable Spring Boot JAR (`./mvnw package -DskipTests`).
+6. **Artifact Upload**: Uploads the packaged JAR file as a GitHub Actions workflow artifact (`actions/upload-artifact@v4`).
+7. **Containerization**: Builds production-grade Docker image using Docker Buildx (`docker/setup-buildx-action@v3`) tagged with `github.sha` and `ci`.
+8. **Container Stack Verification**: Launches PostgreSQL and Spring Boot backend services via `docker compose up -d`.
+9. **Automated Readiness Check**: Executes `scripts/wait-for-health.sh` polling `http://localhost:8081/api/v1/health` until HTTP 200 OK.
+10. **Teardown & Cleanup**: Gracefully shuts down and removes Docker containers (`docker compose down -v`).
+
+### Deployment & Environment Security
+- **Zero Hardcoded Secrets**: All JWT secrets, database credentials, and service configuration parameters are loaded dynamically via environment variables (`JWT_SECRET`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `SPRING_PROFILES_ACTIVE`).
+- **Production Readiness**: Docker multi-stage build creates a lightweight, unprivileged JRE container for production deployment.
+
+
 
 

@@ -1,0 +1,72 @@
+name: ExpenseGuard CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    name: Build, Test & Container Health Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Make scripts executable
+        run: |
+          chmod +x mvnw
+          chmod +x scripts/wait-for-health.sh
+
+      - name: Run unit and integration tests
+        run: ./mvnw clean test
+
+      - name: Build Spring Boot JAR package
+        run: ./mvnw package -DskipTests
+
+      - name: Upload JAR Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: expenseguard-backend-jar
+          path: target/*.jar
+          retention-days: 7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image
+        run: |
+          docker build -t expenseguard-backend:${{ github.sha }} -t expenseguard-backend:ci .
+
+      - name: Start Docker Compose Stack
+        env:
+          POSTGRES_DB: expenseguard_db
+          POSTGRES_USER: expense_user
+          POSTGRES_PASSWORD: expense_secret_password
+          JWT_SECRET: cGhhc2U2M19jaV9jZF9zZWNyZXRfa2V5X2Zvcl9leHBlbnNlZ3VhcmRfYmFja2VuZF90ZXN0aW5nX3B1cnBvc2Vz
+          SPRING_PROFILES_ACTIVE: prod
+        run: |
+          docker compose up -d
+
+      - name: Wait for Backend Container Health
+        run: |
+          ./scripts/wait-for-health.sh 60 http://localhost:8081/api/v1/health
+
+      - name: Output Docker logs on failure
+        if: failure()
+        run: |
+          docker compose logs
+
+      - name: Tear down Docker Compose Stack
+        if: always()
+        run: |
+          docker compose down -v
