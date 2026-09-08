@@ -12,3 +12,9 @@ spring:
       hibernate:
         format_sql: true
         highlight_sql: true
+
+logging:
+  level:
+    com.expenseguard: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG

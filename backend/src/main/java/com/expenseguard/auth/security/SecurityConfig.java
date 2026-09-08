@@ -51,6 +51,7 @@ public class SecurityConfig {
                         // Public endpoints accessible without JWT authentication
                         .requestMatchers(
                                 "/api/v1/health",
+                                "/actuator/health",
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/login"
                         ).permitAll()

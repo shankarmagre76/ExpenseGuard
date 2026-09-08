@@ -334,4 +334,52 @@ Execute the complete test suite:
 - **Idempotency & Optimistic Locking**: Ensures zero duplicate transactions/balance changes on retries, SHA-256 payload consistency, and `@Version` conflict rejection (`409 Conflict`).
 - **Receipt OCR & Storage Security**: Path traversal prevention (`../../etc/passwd`), file size bounds (>10MB), and physical file deletion cleanup.
 
+---
+
+## Docker Setup
+
+ExpenseGuard provides containerized deployment for the Spring Boot backend and PostgreSQL database.
+
+### Prerequisites
+- [Docker Engine](https://docs.docker.com/get-docker/) (v20.10+)
+- [Docker Compose](https://docs.docker.com/compose/install/) (v2.0+)
+
+### Environment Variable Setup
+Copy `.env.example` to `.env` to customize production parameters:
+```bash
+cp .env.example .env
+```
+
+### Build & Run Services
+Build and start the complete application stack (PostgreSQL + Spring Boot Backend):
+```bash
+docker compose up --build
+```
+
+Start services in detached background mode:
+```bash
+docker compose up -d
+```
+
+### View Application Logs
+Stream live logs from the backend service:
+```bash
+docker compose logs -f backend
+```
+
+### Stopping Services
+Stop and remove running containers:
+```bash
+docker compose down
+```
+
+### Database & File Persistence
+- **PostgreSQL Data**: Saved in the named Docker volume `postgres_data`, preserving all tables, records, and schema migrations across container recreations.
+- **Uploaded Receipts**: Stored in the named Docker volume `receipt_data`, guaranteeing that uploaded receipt images persist independently of backend container restarts.
+
+### Health Checks
+- **Public Health Endpoint**: `http://localhost:8081/api/v1/health`
+- **Actuator Health Endpoint**: `http://localhost:8081/actuator/health`
+
+
 
