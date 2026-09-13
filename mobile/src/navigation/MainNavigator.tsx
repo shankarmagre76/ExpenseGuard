@@ -9,6 +9,7 @@ import { AccountsScreen } from '../screens/accounts/AccountsScreen';
 import { CategoriesScreen } from '../screens/categories/CategoriesScreen';
 import { BudgetsScreen } from '../screens/budgets/BudgetsScreen';
 import { AnalyticsScreen } from '../screens/analytics/AnalyticsScreen';
+import { RecurringTransactionsScreen } from '../screens/recurring/RecurringTransactionsScreen';
 import { ProfileScreen } from '../screens/auth/ProfileScreen';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -39,6 +40,7 @@ export const MainNavigator: React.FC = () => {
       <Tab.Screen name="Categories" component={CategoriesScreen} />
       <Tab.Screen name="Budgets" component={BudgetsScreen} />
       <Tab.Screen name="Analytics" component={AnalyticsScreen} />
+      <Tab.Screen name="Recurring" component={RecurringTransactionsScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );

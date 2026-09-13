@@ -6,7 +6,7 @@ Clean, type-safe React Native TypeScript mobile application for the **ExpenseGua
 
 ## 1. Project Purpose
 
-ExpenseGuard Mobile provides a modern, intuitive mobile interface for tracking personal expenses, managing account balances, setting monthly category budgets, analyzing financial analytics and spending trends, and inspecting backend server diagnostics.
+ExpenseGuard Mobile provides a modern, intuitive mobile interface for tracking personal expenses, managing account balances, setting monthly category budgets, scheduling recurring transactions, analyzing financial analytics and spending trends, and inspecting backend server diagnostics.
 
 ---
 
@@ -120,7 +120,18 @@ ExpenseGuard Mobile implements complete monthly budget control and visual financ
 
 ---
 
-## 10. Authentication Architecture
+## 10. Recurring Transactions (Phase 5.1)
+
+ExpenseGuard Mobile supports automated recurring transaction management:
+
+- **Recurring Templates CRUD**: Create, edit, and delete recurring schedules via [`src/api/endpoints/recurringTransactionApi.ts`](file:///d:/JAVA/Projects/ExpenseGuard/mobile/src/api/endpoints/recurringTransactionApi.ts).
+- **Frequencies**: `DAILY`, `WEEKLY`, `MONTHLY`, `YEARLY`.
+- **Active / Disabled Toggle**: Enable or disable recurring schedules (`PUT /api/v1/recurring-transactions/{id}/status`).
+- **Manual Trigger ("Run Now")**: Immediately trigger execution of due recurring occurrences (`POST /api/v1/recurring-transactions/{id}/execute`).
+
+---
+
+## 11. Authentication Architecture
 
 ExpenseGuard Mobile integrates full JWT authentication with the Spring Boot REST endpoints:
 
@@ -134,15 +145,16 @@ ExpenseGuard Mobile integrates full JWT authentication with the Spring Boot REST
 
 ---
 
-## 11. Project Structure
+## 12. Project Structure
 
 ```
 mobile/
 ├── __tests__/
 │   ├── App.test.tsx            # Navigation render test
 │   ├── auth.test.ts            # Auth & token security unit tests
-│   ├── budget_analytics.test.ts # Budgets, analytics & status thresholds unit tests
-│   └── expense.test.ts         # Core expense management unit tests
+│   ├── budget_analytics.test.ts # Budgets & analytics unit tests
+│   ├── expense.test.ts         # Core expense management unit tests
+│   └── recurring_transaction.test.ts # Recurring transaction unit tests
 │
 ├── src/
 │   ├── api/
@@ -154,6 +166,7 @@ mobile/
 │   │       ├── budgetApi.ts    # Budget endpoints (CRUD & summary)
 │   │       ├── categoryApi.ts  # Category endpoints (CRUD)
 │   │       ├── health.ts       # Health check endpoint call
+│   │       ├── recurringTransactionApi.ts # Recurring transaction endpoints (CRUD, status, execute)
 │   │       └── transactionApi.ts # Transaction endpoints (CRUD & paginated filtering)
 │   │
 │   ├── components/             # Reusable core UI components
@@ -166,6 +179,7 @@ mobile/
 │   │   ├── LoadingIndicator.tsx # Activity indicator
 │   │   ├── MonthSelector.tsx   # Month navigation header
 │   │   ├── PrimaryButton.tsx   # Styled action button
+│   │   ├── RecurringTransactionModal.tsx # Create/Edit Recurring modal
 │   │   ├── ScreenContainer.tsx # SafeArea & ScrollView wrapper
 │   │   ├── TransactionFilterModal.tsx # Multi-criteria transaction filter sheet
 │   │   └── TransactionForm.tsx # Reusable expense & income form
@@ -178,11 +192,12 @@ mobile/
 │   │
 │   ├── hooks/
 │   │   ├── useAccounts.ts      # Custom hook for account CRUD state
-│   │   ├── useAnalytics.ts     # Custom hook for analytics state & month selection
+│   │   ├── useAnalytics.ts     # Custom hook for analytics state
 │   │   ├── useAuth.ts          # AuthContext hook
 │   │   ├── useBudgets.ts        # Custom hook for budget CRUD state
 │   │   ├── useCategories.ts    # Custom hook for category CRUD state
 │   │   ├── useHealthCheck.ts   # Backend connectivity health hook
+│   │   ├── useRecurringTransactions.ts # Custom hook for recurring transactions
 │   │   └── useTransactions.ts  # Custom hook for paginated transaction state
 │   │
 │   ├── navigation/             # React Navigation stack & tab navigators
@@ -194,12 +209,13 @@ mobile/
 │   │   ├── categories/         # CategoriesScreen
 │   │   ├── dashboard/          # DashboardScreen
 │   │   ├── debug/              # HealthCheckScreen
+│   │   ├── recurring/          # RecurringTransactionsScreen
 │   │   └── transactions/       # TransactionsScreen & Form screens
 │   │
 │   ├── storage/
 │   │   └── secureStorage.ts    # Secure token & session storage
 │   ├── theme/                  # Theme tokens
-│   ├── types/                  # TypeScript interfaces (account, analytics, api, auth, budget, category, etc.)
+│   ├── types/                  # TypeScript interfaces (account, analytics, api, auth, budget, category, recurringTransaction, etc.)
 │   └── utils/                  # Currency, date, and error helpers
 │
 ├── App.tsx                     # React Native root component
@@ -211,7 +227,7 @@ mobile/
 
 ---
 
-## 12. Type Checking, Linting & Testing
+## 13. Type Checking, Linting & Testing
 
 Run TypeScript compilation check:
 
@@ -231,5 +247,5 @@ Run frontend unit tests:
 
 ```bash
 cd mobile
-npm test
+npm test -- --runInBand
 ```

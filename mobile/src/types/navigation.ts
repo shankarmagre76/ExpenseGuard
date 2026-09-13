@@ -10,6 +10,7 @@ export type MainTabParamList = {
   Categories: undefined;
   Budgets: undefined;
   Analytics: undefined;
+  Recurring: undefined;
   Profile: undefined;
 };
 
