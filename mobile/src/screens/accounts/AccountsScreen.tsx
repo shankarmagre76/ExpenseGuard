@@ -9,10 +9,10 @@ export const AccountsScreen: React.FC = () => {
     <ScreenContainer scrollable>
       <View style={styles.card}>
         <AppText variant="header" style={styles.title}>
-          Financial Accounts
+          Financial Account
         </AppText>
         <AppText variant="body" color={colors.textSecondary}>
-          Bank accounts, credit cards, wallet management, and balances integration will be added in Phase 2.
+          Bank accounts, credit cards, wallet management, and balances integration will be added in Phase 2..!.!
         </AppText>
       </View>
     </ScreenContainer>
