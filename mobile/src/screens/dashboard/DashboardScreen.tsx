@@ -99,6 +99,12 @@ export const DashboardScreen: React.FC<any> = ({ navigation }) => {
             style={[styles.halfActionBtn, { backgroundColor: colors.success }]}
           />
         </View>
+        <PrimaryButton
+          title="📷 Scan Receipt with OCR"
+          onPress={() => navigation.navigate('ReceiptUpload')}
+          variant="outline"
+          style={{ marginBottom: spacing.lg }}
+        />
 
         {/* Budget Status Summary */}
         {budgets.length > 0 && (

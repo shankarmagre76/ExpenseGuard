@@ -1,3 +1,5 @@
+import { ReceiptResponse } from './receipt';
+
 export type AuthStackParamList = {
   Login: undefined;
   Register: undefined;
@@ -21,4 +23,6 @@ export type RootStackParamList = {
   AddExpense: undefined;
   AddIncome: undefined;
   EditTransaction: { transactionId: string };
+  ReceiptUpload: undefined;
+  OcrReview: { receipt: ReceiptResponse };
 };

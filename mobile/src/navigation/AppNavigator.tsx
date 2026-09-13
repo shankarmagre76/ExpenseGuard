@@ -8,6 +8,8 @@ import { HealthCheckScreen } from '../screens/debug/HealthCheckScreen';
 import { AddExpenseScreen } from '../screens/transactions/AddExpenseScreen';
 import { AddIncomeScreen } from '../screens/transactions/AddIncomeScreen';
 import { EditTransactionScreen } from '../screens/transactions/EditTransactionScreen';
+import { ReceiptUploadScreen } from '../screens/receipt/ReceiptUploadScreen';
+import { OcrReviewScreen } from '../screens/receipt/OcrReviewScreen';
 import { useAuth } from '../hooks/useAuth';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { LoadingIndicator } from '../components/LoadingIndicator';
@@ -58,6 +60,26 @@ export const AppNavigator: React.FC = () => {
               options={{
                 headerShown: true,
                 title: 'Edit Transaction',
+                headerStyle: { backgroundColor: colors.surface },
+                headerTintColor: colors.textPrimary,
+              }}
+            />
+            <RootStack.Screen
+              name="ReceiptUpload"
+              component={ReceiptUploadScreen}
+              options={{
+                headerShown: true,
+                title: 'Scan Receipt',
+                headerStyle: { backgroundColor: colors.surface },
+                headerTintColor: colors.textPrimary,
+              }}
+            />
+            <RootStack.Screen
+              name="OcrReview"
+              component={OcrReviewScreen}
+              options={{
+                headerShown: true,
+                title: 'Review OCR Data',
                 headerStyle: { backgroundColor: colors.surface },
                 headerTintColor: colors.textPrimary,
               }}
