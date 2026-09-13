@@ -12,7 +12,9 @@ import { PrimaryButton } from '../../components/PrimaryButton';
 import { ErrorMessage } from '../../components/ErrorMessage';
 import { useAccounts } from '../../hooks/useAccounts';
 import { useTransactions } from '../../hooks/useTransactions';
+import { useBudgets } from '../../hooks/useBudgets';
 import { useHealthCheck } from '../../hooks/useHealthCheck';
+import { BudgetProgressBar } from '../../components/BudgetProgressBar';
 import { colors, spacing, borderRadius } from '../../theme';
 import { formatCurrency } from '../../utils/currencyFormatter';
 import { formatDateDisplay } from '../../utils/dateFormatter';
@@ -20,11 +22,12 @@ import { formatDateDisplay } from '../../utils/dateFormatter';
 export const DashboardScreen: React.FC<any> = ({ navigation }) => {
   const { accounts, loading: accountsLoading, error: accountsError, refresh: refreshAccounts } = useAccounts();
   const { transactions, loading: txLoading, error: txError, refresh: refreshTransactions } = useTransactions({ size: 5 });
+  const { budgets, refreshBudgets } = useBudgets();
   const { status: healthStatus } = useHealthCheck();
 
   const handleRefresh = useCallback(async () => {
-    await Promise.all([refreshAccounts(), refreshTransactions()]);
-  }, [refreshAccounts, refreshTransactions]);
+    await Promise.all([refreshAccounts(), refreshTransactions(), refreshBudgets()]);
+  }, [refreshAccounts, refreshTransactions, refreshBudgets]);
 
   // Compute aggregated total net balance from backend accounts response
   const totalBalance = accounts.reduce((acc, account) => {
@@ -96,6 +99,29 @@ export const DashboardScreen: React.FC<any> = ({ navigation }) => {
             style={[styles.halfActionBtn, { backgroundColor: colors.success }]}
           />
         </View>
+
+        {/* Budget Status Summary */}
+        {budgets.length > 0 && (
+          <View style={styles.emptyCard}>
+            <View style={styles.sectionHeaderRow}>
+              <AppText variant="header">Budget Status</AppText>
+              <TouchableOpacity onPress={() => navigation.navigate('Budgets')}>
+                <AppText variant="caption" color={colors.primary} bold>
+                  Manage Budgets →
+                </AppText>
+              </TouchableOpacity>
+            </View>
+            {budgets.slice(0, 2).map((b) => (
+              <View key={b.id} style={styles.budgetWidgetItem}>
+                <View style={styles.budgetWidgetHeader}>
+                  <AppText variant="body" bold>{b.categoryName}</AppText>
+                  <AppText variant="caption">{formatCurrency(b.spentAmount)} / {formatCurrency(b.amount ?? b.budgetAmount ?? 0)}</AppText>
+                </View>
+                <BudgetProgressBar utilizationPercentage={b.utilizationPercentage} />
+              </View>
+            ))}
+          </View>
+        )}
 
         {/* Accounts Overview Section */}
         <View style={styles.sectionHeaderRow}>
@@ -290,5 +316,12 @@ const styles = StyleSheet.create({
   healthFooter: {
     alignItems: 'center',
     paddingVertical: spacing.md,
+  },
+  budgetWidgetItem: {
+    marginTop: spacing.xs,
+  },
+  budgetWidgetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
 });

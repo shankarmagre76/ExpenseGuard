@@ -6,7 +6,7 @@ Clean, type-safe React Native TypeScript mobile application for the **ExpenseGua
 
 ## 1. Project Purpose
 
-ExpenseGuard Mobile provides a modern, intuitive mobile interface for tracking personal expenses, managing account balances, monitoring budgets, analyzing visual spend breakdowns, and inspecting backend server diagnostics.
+ExpenseGuard Mobile provides a modern, intuitive mobile interface for tracking personal expenses, managing account balances, setting monthly category budgets, analyzing financial analytics and spending trends, and inspecting backend server diagnostics.
 
 ---
 
@@ -76,37 +76,51 @@ ENV_NAME=development
 
 ---
 
-## 8. Core Expense Management (Phase 3)
+## 8. Core Features & Architecture
 
-ExpenseGuard Mobile provides a complete financial tracking experience consuming Spring Boot REST APIs:
-
-### Dashboard
+### Dashboard & Navigation
 - Real-time **Total Net Balance** calculated across user accounts.
 - **Recent Income & Recent Expense** summary breakdown.
+- **Budget Status Overview Widget** displaying monthly budget utilization warnings.
 - Quick action triggers for **+ Add Expense**, **+ Add Income**, and recent activity feed.
 
-### Accounts Management
+### Accounts Management (Phase 3)
 - **CRUD Operations**: Create, edit, and delete financial accounts via [`src/api/endpoints/accountApi.ts`](file:///d:/JAVA/Projects/ExpenseGuard/mobile/src/api/endpoints/accountApi.ts).
 - **Supported Account Types**: `CASH`, `BANK`, `SAVINGS`, `CREDIT_CARD`, `WALLET`.
-- Delete confirmation alerts to prevent accidental removal.
 
-### Categories Management
+### Categories Management (Phase 3)
 - **CRUD Operations**: Create, edit, and delete expense and income categories via [`src/api/endpoints/categoryApi.ts`](file:///d:/JAVA/Projects/ExpenseGuard/mobile/src/api/endpoints/categoryApi.ts).
-- **Tabbed Interface**: Separate management for `EXPENSE` and `INCOME` categories.
 
-### Transactions & Pagination
+### Transactions & Pagination (Phase 3)
 - **CRUD Operations**: Create, edit, and delete transactions via [`src/api/endpoints/transactionApi.ts`](file:///d:/JAVA/Projects/ExpenseGuard/mobile/src/api/endpoints/transactionApi.ts).
-- **Infinite Scroll Pagination**: Handles Spring Data `Page<TransactionResponse>` with `onEndReached` infinite scrolling and end-of-list detection.
-- **Multi-criteria Filtering**: Filter by transaction type (`INCOME`, `EXPENSE`), account, category, `fromDate`, `toDate`.
-- **Reusable Forms**: [`TransactionForm.tsx`](file:///d:/JAVA/Projects/ExpenseGuard/mobile/src/components/TransactionForm.tsx) supports both Expense and Income entry without duplicated logic.
-
-### Money & Date Formatting Safety
-- Monetary values avoid JavaScript floating-point arithmetic errors by utilizing [`src/utils/currencyFormatter.ts`](file:///d:/JAVA/Projects/ExpenseGuard/mobile/src/utils/currencyFormatter.ts).
-- Calendar dates maintain ISO format (`YYYY-MM-DD`) without timezone conversion drift.
+- **Infinite Scroll Pagination**: Handles Spring Data `Page<TransactionResponse>` with `onEndReached` infinite scrolling.
 
 ---
 
-## 9. Authentication Architecture
+## 9. Budgets & Financial Analytics (Phase 4)
+
+ExpenseGuard Mobile implements complete monthly budget control and visual financial analytics:
+
+### Budget Management & Utilization
+- **Budgets CRUD Operations**: Create, edit, and delete category budgets via [`src/api/endpoints/budgetApi.ts`](file:///d:/JAVA/Projects/ExpenseGuard/mobile/src/api/endpoints/budgetApi.ts).
+- **Category Filter Restriction**: Budget creation strictly restricts category selection to `EXPENSE` type categories.
+- **Backend Threshold Colors & Badges**:
+  - `< 80%`: Green (`On track`)
+  - `80% - < 100%`: Warning Yellow/Orange (`Warning`)
+  - `100%`: Dark Alert (`Budget reached`)
+  - `> 100%`: Red (`Over budget`)
+- **Month Selector Component**: [`MonthSelector.tsx`](file:///d:/JAVA/Projects/ExpenseGuard/mobile/src/components/MonthSelector.tsx) allows seamlessly navigating months (`YYYY-MM` ISO format) with human-readable display (`September 2026`).
+
+### Financial Analytics Dashboard
+- **Monthly Financial Summary**: Overview cards for Total Income, Total Expense, Net Savings, and Savings Rate (`GET /api/v1/analytics/monthly`).
+- **Category Expense Breakdown**: Visual bar chart breakdown of spending by category with percentages (`GET /api/v1/analytics/categories`).
+- **Budget Performance**: Budget vs actual spending progress bars and status indicators (`GET /api/v1/analytics/budget-performance`).
+- **Account Cash Flow**: Account-level income, expense, and net change metrics (`GET /api/v1/analytics/accounts`).
+- **6-Month Spending Trend**: Multi-month comparative bar chart visualization for historical income vs expense trends (`GET /api/v1/analytics/trend`).
+
+---
+
+## 10. Authentication Architecture
 
 ExpenseGuard Mobile integrates full JWT authentication with the Spring Boot REST endpoints:
 
@@ -117,17 +131,17 @@ ExpenseGuard Mobile integrates full JWT authentication with the Spring Boot REST
 
 ### Secure Token Storage
 - JWT access tokens and user profile payloads are encrypted and stored using **`react-native-keychain`** via [`src/storage/secureStorage.ts`](file:///d:/JAVA/Projects/ExpenseGuard/mobile/src/storage/secureStorage.ts).
-- Passwords are **never** persisted or logged.
 
 ---
 
-## 10. Project Structure
+## 11. Project Structure
 
 ```
 mobile/
 ├── __tests__/
 │   ├── App.test.tsx            # Navigation render test
 │   ├── auth.test.ts            # Auth & token security unit tests
+│   ├── budget_analytics.test.ts # Budgets, analytics & status thresholds unit tests
 │   └── expense.test.ts         # Core expense management unit tests
 │
 ├── src/
@@ -135,16 +149,22 @@ mobile/
 │   │   ├── client.ts           # Axios HTTP client with Bearer token & 401 interceptors
 │   │   └── endpoints/
 │   │       ├── accountApi.ts   # Account endpoints (CRUD)
-│   │       ├── authApi.ts      # Auth endpoints (register, login, getCurrentUser)
+│   │       ├── analyticsApi.ts # Financial analytics endpoints
+│   │       ├── authApi.ts      # Auth endpoints
+│   │       ├── budgetApi.ts    # Budget endpoints (CRUD & summary)
 │   │       ├── categoryApi.ts  # Category endpoints (CRUD)
-│   │       ├── health.ts       # Health check API endpoint call
+│   │       ├── health.ts       # Health check endpoint call
 │   │       └── transactionApi.ts # Transaction endpoints (CRUD & paginated filtering)
 │   │
 │   ├── components/             # Reusable core UI components
 │   │   ├── AccountModal.tsx    # Create/Edit Account modal
+│   │   ├── AnalyticsBarChart.tsx # Category & Trend visualizers
+│   │   ├── BudgetModal.tsx     # Create/Edit Budget modal
+│   │   ├── BudgetProgressBar.tsx # Utilization progress bar & status badge
 │   │   ├── CategoryModal.tsx   # Create/Edit Category modal
 │   │   ├── ErrorMessage.tsx    # Error display with retry action
 │   │   ├── LoadingIndicator.tsx # Activity indicator
+│   │   ├── MonthSelector.tsx   # Month navigation header
 │   │   ├── PrimaryButton.tsx   # Styled action button
 │   │   ├── ScreenContainer.tsx # SafeArea & ScrollView wrapper
 │   │   ├── TransactionFilterModal.tsx # Multi-criteria transaction filter sheet
@@ -158,35 +178,32 @@ mobile/
 │   │
 │   ├── hooks/
 │   │   ├── useAccounts.ts      # Custom hook for account CRUD state
+│   │   ├── useAnalytics.ts     # Custom hook for analytics state & month selection
 │   │   ├── useAuth.ts          # AuthContext hook
+│   │   ├── useBudgets.ts        # Custom hook for budget CRUD state
 │   │   ├── useCategories.ts    # Custom hook for category CRUD state
 │   │   ├── useHealthCheck.ts   # Backend connectivity health hook
-│   │   └── useTransactions.ts  # Custom hook for paginated transaction state & filters
+│   │   └── useTransactions.ts  # Custom hook for paginated transaction state
 │   │
 │   ├── navigation/             # React Navigation stack & tab navigators
-│   │   ├── AppNavigator.tsx    # Root stack navigator with auth & transaction routes
-│   │   ├── AuthNavigator.tsx   # Login & Register stack navigator
-│   │   ├── MainNavigator.tsx   # Main bottom tab navigator (Dashboard, Transactions, Accounts, Categories, Profile)
-│   │   └── types.ts            # Navigation parameter list types
-│   │
 │   ├── screens/
-│   │   ├── accounts/           # AccountsScreen (Account list & CRUD)
+│   │   ├── accounts/           # AccountsScreen
+│   │   ├── analytics/          # AnalyticsScreen
 │   │   ├── auth/               # LoginScreen, RegisterScreen, ProfileScreen
-│   │   ├── categories/         # CategoriesScreen (Expense & Income categories)
-│   │   ├── dashboard/          # DashboardScreen (Net balance, recent activity, quick actions)
+│   │   ├── budgets/            # BudgetsScreen
+│   │   ├── categories/         # CategoriesScreen
+│   │   ├── dashboard/          # DashboardScreen
 │   │   ├── debug/              # HealthCheckScreen
-│   │   └── transactions/       # TransactionsScreen, AddExpenseScreen, AddIncomeScreen, EditTransactionScreen
+│   │   └── transactions/       # TransactionsScreen & Form screens
 │   │
 │   ├── storage/
-│   │   └── secureStorage.ts    # Secure token & session storage (react-native-keychain)
-│   │
-│   ├── theme/                  # Theme tokens (colors, spacing, typography, borderRadius)
-│   ├── types/                  # TypeScript interfaces (account, api, auth, category, dashboard, health, navigation, transaction)
+│   │   └── secureStorage.ts    # Secure token & session storage
+│   ├── theme/                  # Theme tokens
+│   ├── types/                  # TypeScript interfaces (account, analytics, api, auth, budget, category, etc.)
 │   └── utils/                  # Currency, date, and error helpers
 │
 ├── App.tsx                     # React Native root component
 ├── .env.example                # Sample environment file template
-├── .gitignore                  # Git exclusions for secrets, node_modules, build outputs
 ├── package.json                # Project dependencies & scripts
 ├── tsconfig.json               # TypeScript compiler configuration
 └── README.md                   # Mobile project documentation
@@ -194,22 +211,25 @@ mobile/
 
 ---
 
-## Type Checking, Linting & Testing
+## 12. Type Checking, Linting & Testing
 
 Run TypeScript compilation check:
 
 ```bash
+cd mobile
 npx tsc --noEmit
 ```
 
 Run ESLint check:
 
 ```bash
+cd mobile
 npm run lint
 ```
 
 Run frontend unit tests:
 
 ```bash
+cd mobile
 npm test
 ```
