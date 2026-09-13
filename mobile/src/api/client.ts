@@ -26,9 +26,9 @@ class ApiClient {
   public setAuthToken(token: string | null): void {
     this.activeToken = token;
     if (token) {
-      this.instance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      this.instance.defaults.headers.common.Authorization = `Bearer ${token}`;
     } else {
-      delete this.instance.defaults.headers.common['Authorization'];
+      delete this.instance.defaults.headers.common.Authorization;
     }
   }
 

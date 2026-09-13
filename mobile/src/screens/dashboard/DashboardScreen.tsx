@@ -1,122 +1,193 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useCallback } from 'react';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  RefreshControl,
+} from 'react-native';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { AppText } from '../../components/AppText';
 import { PrimaryButton } from '../../components/PrimaryButton';
+import { ErrorMessage } from '../../components/ErrorMessage';
+import { useAccounts } from '../../hooks/useAccounts';
+import { useTransactions } from '../../hooks/useTransactions';
 import { useHealthCheck } from '../../hooks/useHealthCheck';
 import { colors, spacing, borderRadius } from '../../theme';
-import { apiClient } from '../../api/client';
+import { formatCurrency } from '../../utils/currencyFormatter';
+import { formatDateDisplay } from '../../utils/dateFormatter';
 
 export const DashboardScreen: React.FC<any> = ({ navigation }) => {
-  const { status, data, error, checkHealth, lastChecked } = useHealthCheck();
+  const { accounts, loading: accountsLoading, error: accountsError, refresh: refreshAccounts } = useAccounts();
+  const { transactions, loading: txLoading, error: txError, refresh: refreshTransactions } = useTransactions({ size: 5 });
+  const { status: healthStatus } = useHealthCheck();
 
-  const getStatusBadgeColor = () => {
-    switch (status) {
-      case 'connected':
-        return colors.success;
-      case 'failed':
-        return colors.error;
-      case 'loading':
-      default:
-        return colors.warning;
-    }
-  };
+  const handleRefresh = useCallback(async () => {
+    await Promise.all([refreshAccounts(), refreshTransactions()]);
+  }, [refreshAccounts, refreshTransactions]);
+
+  // Compute aggregated total net balance from backend accounts response
+  const totalBalance = accounts.reduce((acc, account) => {
+    const val = typeof account.balance === 'string' ? parseFloat(account.balance) : account.balance;
+    return acc + (isNaN(val) ? 0 : val);
+  }, 0);
+
+  // Filter recent income vs expense totals
+  const totalIncome = transactions
+    .filter((t) => t.type === 'INCOME')
+    .reduce((acc, t) => acc + (typeof t.amount === 'string' ? parseFloat(t.amount) : t.amount), 0);
+
+  const totalExpense = transactions
+    .filter((t) => t.type === 'EXPENSE')
+    .reduce((acc, t) => acc + (typeof t.amount === 'string' ? parseFloat(t.amount) : t.amount), 0);
+
+  const primaryCurrency = accounts.length > 0 ? accounts[0].currency : 'USD';
+  const isLoading = accountsLoading || txLoading;
 
   return (
     <ScreenContainer scrollable>
-      {/* Header Banner */}
-      <View style={styles.heroCard}>
-        <AppText variant="title" color={colors.surface} style={styles.heroTitle}>
-          ExpenseGuard
-        </AppText>
-        <AppText variant="body" color={colors.primaryLight}>
-          Smart Personal Finance Management Mobile App
-        </AppText>
-      </View>
+      <ScrollView
+        refreshControl={<RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Total Net Balance Card */}
+        <View style={styles.heroCard}>
+          <AppText variant="caption" color={colors.primaryLight} style={styles.heroLabel}>
+            TOTAL NET BALANCE
+          </AppText>
+          <AppText variant="title" color={colors.surface} style={styles.heroBalance}>
+            {formatCurrency(totalBalance, primaryCurrency)}
+          </AppText>
+          <AppText variant="caption" color={colors.primaryLight}>
+            Across {accounts.length} linked financial account{accounts.length === 1 ? '' : 's'}
+          </AppText>
+        </View>
 
-      {/* Backend Status Card */}
-      <View style={styles.statusCard}>
-        <View style={styles.statusHeader}>
-          <AppText variant="header">Backend Status</AppText>
-          <View style={[styles.statusBadge, { backgroundColor: getStatusBadgeColor() }]}>
-            <AppText variant="caption" color={colors.surface} bold>
-              {status.toUpperCase()}
+        {/* Quick Summary Grid */}
+        <View style={styles.summaryGrid}>
+          <View style={[styles.summaryCard, { borderColor: colors.success }]}>
+            <AppText variant="caption" color={colors.textMuted}>
+              RECENT INCOME
+            </AppText>
+            <AppText variant="header" color={colors.success} style={styles.summaryValue}>
+              +{formatCurrency(totalIncome, primaryCurrency)}
+            </AppText>
+          </View>
+          <View style={[styles.summaryCard, { borderColor: colors.error }]}>
+            <AppText variant="caption" color={colors.textMuted}>
+              RECENT EXPENSE
+            </AppText>
+            <AppText variant="header" color={colors.error} style={styles.summaryValue}>
+              -{formatCurrency(totalExpense, primaryCurrency)}
             </AppText>
           </View>
         </View>
 
-        <AppText variant="body" color={colors.textSecondary} style={styles.urlText}>
-          Base URL: {apiClient.getBaseUrl()}
-        </AppText>
+        {/* Quick Action Buttons */}
+        <View style={styles.actionRow}>
+          <PrimaryButton
+            title="+ Add Expense"
+            onPress={() => navigation.navigate('AddExpense')}
+            style={[styles.halfActionBtn, { backgroundColor: colors.error }]}
+          />
+          <PrimaryButton
+            title="+ Add Income"
+            onPress={() => navigation.navigate('AddIncome')}
+            style={[styles.halfActionBtn, { backgroundColor: colors.success }]}
+          />
+        </View>
 
-        {status === 'connected' && data ? (
-          <View style={styles.successBox}>
-            <AppText variant="body" color={colors.success} bold>
-              ✓ {data.message}
+        {/* Accounts Overview Section */}
+        <View style={styles.sectionHeaderRow}>
+          <AppText variant="header">Your Accounts</AppText>
+          <TouchableOpacity onPress={() => navigation.navigate('Accounts')}>
+            <AppText variant="caption" color={colors.primary} bold>
+              Manage All →
             </AppText>
-            <AppText variant="caption" color={colors.textMuted} style={styles.timestamp}>
-              Timestamp: {data.timestamp}
+          </TouchableOpacity>
+        </View>
+
+        {accountsError ? <ErrorMessage message={accountsError} onRetry={refreshAccounts} /> : null}
+
+        {accounts.length === 0 && !accountsLoading ? (
+          <View style={styles.emptyCard}>
+            <AppText variant="body" color={colors.textSecondary}>
+              No accounts created yet. Add an account to begin tracking transactions.
             </AppText>
           </View>
-        ) : null}
-
-        {status === 'failed' && error ? (
-          <View style={styles.errorBox}>
-            <AppText variant="body" color={colors.error} bold>
-              ✕ Connection Failed
-            </AppText>
-            <AppText variant="caption" color={colors.textSecondary}>
-              {error}
-            </AppText>
+        ) : (
+          <View style={styles.accountsScroll}>
+            {accounts.slice(0, 3).map((acc) => (
+              <View key={acc.id} style={styles.accountChip}>
+                <View style={styles.accountChipHeader}>
+                  <AppText variant="body" bold style={styles.accountName}>
+                    {acc.name}
+                  </AppText>
+                  <AppText variant="caption" color={colors.primary}>
+                    {acc.type}
+                  </AppText>
+                </View>
+                <AppText variant="subheader" bold color={colors.textPrimary}>
+                  {formatCurrency(acc.balance, acc.currency)}
+                </AppText>
+              </View>
+            ))}
           </View>
-        ) : null}
-
-        {lastChecked ? (
-          <AppText variant="caption" color={colors.textMuted} style={styles.lastCheckedText}>
-            Last checked: {lastChecked}
-          </AppText>
-        ) : null}
-
-        <PrimaryButton
-          title="Re-check Connection"
-          onPress={checkHealth}
-          variant="outline"
-          isLoading={status === 'loading'}
-          style={styles.checkButton}
-        />
-      </View>
-
-      {/* Quick Navigation to Debug Screen */}
-      <TouchableOpacity
-        style={styles.debugCard}
-        onPress={() => navigation.navigate('HealthCheck')}
-      >
-        <AppText variant="subheader" bold color={colors.primary}>
-          Open API Health Diagnostics →
-        </AppText>
-        <AppText variant="caption" color={colors.textSecondary}>
-          Detailed inspection of REST endpoint /api/v1/health
-        </AppText>
-      </TouchableOpacity>
-
-      {/* Feature Placeholders */}
-      <View style={styles.sectionHeader}>
-        <AppText variant="header">Upcoming Features</AppText>
-      </View>
-      <View style={styles.grid}>
-        {['Transactions', 'Accounts', 'Budgets', 'Analytics', 'Receipt Scanner', 'Notifications'].map(
-          (feature, index) => (
-            <View key={index} style={styles.featureChip}>
-              <AppText variant="body" semibold color={colors.textPrimary}>
-                {feature}
-              </AppText>
-              <AppText variant="caption" color={colors.textMuted}>
-                Phase {index < 3 ? '2' : '3'}
-              </AppText>
-            </View>
-          )
         )}
-      </View>
+
+        {/* Recent Activity Section */}
+        <View style={styles.sectionHeaderRow}>
+          <AppText variant="header">Recent Activity</AppText>
+          <TouchableOpacity onPress={() => navigation.navigate('Transactions')}>
+            <AppText variant="caption" color={colors.primary} bold>
+              View All →
+            </AppText>
+          </TouchableOpacity>
+        </View>
+
+        {txError ? <ErrorMessage message={txError} onRetry={refreshTransactions} /> : null}
+
+        {transactions.length === 0 && !txLoading ? (
+          <View style={styles.emptyCard}>
+            <AppText variant="body" color={colors.textSecondary}>
+              No transactions recorded yet. Tap "+ Add Expense" or "+ Add Income" above.
+            </AppText>
+          </View>
+        ) : (
+          <View style={styles.txList}>
+            {transactions.slice(0, 5).map((tx) => {
+              const isIncome = tx.type === 'INCOME';
+              const color = isIncome ? colors.success : colors.error;
+              const prefix = isIncome ? '+' : '-';
+              return (
+                <View key={tx.id} style={styles.txItem}>
+                  <View style={styles.txLeft}>
+                    <AppText variant="body" bold>
+                      {tx.categoryName || 'Transaction'}
+                    </AppText>
+                    <AppText variant="caption" color={colors.textMuted}>
+                      {formatDateDisplay(tx.transactionDate)}
+                    </AppText>
+                  </View>
+                  <AppText variant="body" bold color={color}>
+                    {prefix}{formatCurrency(tx.amount)}
+                  </AppText>
+                </View>
+              );
+            })}
+          </View>
+        )}
+
+        {/* Backend Status Footer Badge */}
+        <TouchableOpacity
+          style={styles.healthFooter}
+          onPress={() => navigation.navigate('HealthCheck')}
+        >
+          <AppText variant="caption" color={colors.textMuted}>
+            Backend Server: {healthStatus.toUpperCase()} (Port 8081) • Tap for diagnostics →
+          </AppText>
+        </TouchableOpacity>
+      </ScrollView>
     </ScreenContainer>
   );
 };
@@ -128,72 +199,96 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     marginBottom: spacing.md,
   },
-  heroTitle: {
+  heroLabel: {
+    letterSpacing: 1,
     marginBottom: spacing.xs,
   },
-  statusCard: {
+  heroBalance: {
+    fontSize: 32,
+    fontWeight: '700',
+    marginBottom: spacing.xs,
+  },
+  summaryGrid: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  summaryCard: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  summaryValue: {
+    marginTop: spacing.xs,
+    fontSize: 18,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
+  },
+  halfActionBtn: {
+    flex: 1,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  emptyCard: {
+    backgroundColor: colors.surface,
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: spacing.md,
+  },
+  accountsScroll: {
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  accountChip: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
     padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
-    marginBottom: spacing.md,
   },
-  statusHeader: {
+  accountChipHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: spacing.xs,
   },
-  statusBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.full,
+  accountName: {
+    fontSize: 16,
   },
-  urlText: {
-    marginBottom: spacing.sm,
-  },
-  successBox: {
-    backgroundColor: colors.successLight,
-    padding: spacing.sm,
-    borderRadius: borderRadius.sm,
-    marginBottom: spacing.sm,
-  },
-  errorBox: {
-    backgroundColor: colors.errorLight,
-    padding: spacing.sm,
-    borderRadius: borderRadius.sm,
-    marginBottom: spacing.sm,
-  },
-  timestamp: {
-    marginTop: spacing.xs,
-  },
-  lastCheckedText: {
-    marginBottom: spacing.sm,
-  },
-  checkButton: {
-    marginTop: spacing.xs,
-  },
-  debugCard: {
-    backgroundColor: colors.primaryLight,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-  },
-  sectionHeader: {
-    marginVertical: spacing.sm,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  featureChip: {
-    width: '48%',
+  txList: {
     backgroundColor: colors.surface,
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.lg,
     borderWidth: 1,
     borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  txItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  txLeft: {
+    flex: 1,
+  },
+  healthFooter: {
+    alignItems: 'center',
+    paddingVertical: spacing.md,
   },
 });

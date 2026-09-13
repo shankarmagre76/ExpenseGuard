@@ -6,6 +6,7 @@ import { colors } from '../theme';
 import { DashboardScreen } from '../screens/dashboard/DashboardScreen';
 import { TransactionsScreen } from '../screens/transactions/TransactionsScreen';
 import { AccountsScreen } from '../screens/accounts/AccountsScreen';
+import { CategoriesScreen } from '../screens/categories/CategoriesScreen';
 import { BudgetsScreen } from '../screens/budgets/BudgetsScreen';
 import { AnalyticsScreen } from '../screens/analytics/AnalyticsScreen';
 import { ProfileScreen } from '../screens/auth/ProfileScreen';
@@ -35,6 +36,7 @@ export const MainNavigator: React.FC = () => {
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
       <Tab.Screen name="Transactions" component={TransactionsScreen} />
       <Tab.Screen name="Accounts" component={AccountsScreen} />
+      <Tab.Screen name="Categories" component={CategoriesScreen} />
       <Tab.Screen name="Budgets" component={BudgetsScreen} />
       <Tab.Screen name="Analytics" component={AnalyticsScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />

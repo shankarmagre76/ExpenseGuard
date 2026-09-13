@@ -5,7 +5,6 @@ import {
   LoginRequest,
   RegisterRequest,
   RegisterResponse,
-  UserResponse,
 } from '../types/auth';
 import {
   saveSecureToken,

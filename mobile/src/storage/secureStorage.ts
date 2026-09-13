@@ -15,7 +15,7 @@ export const saveSecureToken = async (token: string): Promise<boolean> => {
       service: TOKEN_SERVICE_KEY,
     });
     return true;
-  } catch (error) {
+  } catch {
     // Fallback if Keychain is unavailable (e.g., Jest runner)
     inMemoryToken = token;
     return true;
@@ -32,7 +32,7 @@ export const getSecureToken = async (): Promise<string | null> => {
       return credentials.password;
     }
     return inMemoryToken;
-  } catch (error) {
+  } catch {
     return inMemoryToken;
   }
 };
@@ -42,7 +42,7 @@ export const removeSecureToken = async (): Promise<boolean> => {
     inMemoryToken = null;
     await Keychain.resetGenericPassword({ service: TOKEN_SERVICE_KEY });
     return true;
-  } catch (error) {
+  } catch {
     inMemoryToken = null;
     return true;
   }
@@ -56,7 +56,7 @@ export const saveSecureUser = async (user: UserResponse): Promise<boolean> => {
       service: USER_SERVICE_KEY,
     });
     return true;
-  } catch (error) {
+  } catch {
     inMemoryUser = JSON.stringify(user);
     return true;
   }
@@ -72,7 +72,7 @@ export const getSecureUser = async (): Promise<UserResponse | null> => {
       return JSON.parse(jsonStr) as UserResponse;
     }
     return null;
-  } catch (error) {
+  } catch {
     if (inMemoryUser) {
       try {
         return JSON.parse(inMemoryUser) as UserResponse;

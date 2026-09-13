@@ -7,6 +7,7 @@ export type MainTabParamList = {
   Dashboard: undefined;
   Transactions: undefined;
   Accounts: undefined;
+  Categories: undefined;
   Budgets: undefined;
   Analytics: undefined;
   Profile: undefined;
@@ -16,4 +17,7 @@ export type RootStackParamList = {
   Auth: undefined;
   Main: undefined;
   HealthCheck: undefined;
+  AddExpense: undefined;
+  AddIncome: undefined;
+  EditTransaction: { transactionId: string };
 };

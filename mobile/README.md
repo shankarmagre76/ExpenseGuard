@@ -76,7 +76,37 @@ ENV_NAME=development
 
 ---
 
-## 8. Authentication Architecture
+## 8. Core Expense Management (Phase 3)
+
+ExpenseGuard Mobile provides a complete financial tracking experience consuming Spring Boot REST APIs:
+
+### Dashboard
+- Real-time **Total Net Balance** calculated across user accounts.
+- **Recent Income & Recent Expense** summary breakdown.
+- Quick action triggers for **+ Add Expense**, **+ Add Income**, and recent activity feed.
+
+### Accounts Management
+- **CRUD Operations**: Create, edit, and delete financial accounts via [`src/api/endpoints/accountApi.ts`](file:///d:/JAVA/Projects/ExpenseGuard/mobile/src/api/endpoints/accountApi.ts).
+- **Supported Account Types**: `CASH`, `BANK`, `SAVINGS`, `CREDIT_CARD`, `WALLET`.
+- Delete confirmation alerts to prevent accidental removal.
+
+### Categories Management
+- **CRUD Operations**: Create, edit, and delete expense and income categories via [`src/api/endpoints/categoryApi.ts`](file:///d:/JAVA/Projects/ExpenseGuard/mobile/src/api/endpoints/categoryApi.ts).
+- **Tabbed Interface**: Separate management for `EXPENSE` and `INCOME` categories.
+
+### Transactions & Pagination
+- **CRUD Operations**: Create, edit, and delete transactions via [`src/api/endpoints/transactionApi.ts`](file:///d:/JAVA/Projects/ExpenseGuard/mobile/src/api/endpoints/transactionApi.ts).
+- **Infinite Scroll Pagination**: Handles Spring Data `Page<TransactionResponse>` with `onEndReached` infinite scrolling and end-of-list detection.
+- **Multi-criteria Filtering**: Filter by transaction type (`INCOME`, `EXPENSE`), account, category, `fromDate`, `toDate`.
+- **Reusable Forms**: [`TransactionForm.tsx`](file:///d:/JAVA/Projects/ExpenseGuard/mobile/src/components/TransactionForm.tsx) supports both Expense and Income entry without duplicated logic.
+
+### Money & Date Formatting Safety
+- Monetary values avoid JavaScript floating-point arithmetic errors by utilizing [`src/utils/currencyFormatter.ts`](file:///d:/JAVA/Projects/ExpenseGuard/mobile/src/utils/currencyFormatter.ts).
+- Calendar dates maintain ISO format (`YYYY-MM-DD`) without timezone conversion drift.
+
+---
+
+## 9. Authentication Architecture
 
 ExpenseGuard Mobile integrates full JWT authentication with the Spring Boot REST endpoints:
 
@@ -89,73 +119,36 @@ ExpenseGuard Mobile integrates full JWT authentication with the Spring Boot REST
 - JWT access tokens and user profile payloads are encrypted and stored using **`react-native-keychain`** via [`src/storage/secureStorage.ts`](file:///d:/JAVA/Projects/ExpenseGuard/mobile/src/storage/secureStorage.ts).
 - Passwords are **never** persisted or logged.
 
-### Session Restoration & Auto-Login
-- On application startup, [`AuthContext`](file:///d:/JAVA/Projects/ExpenseGuard/mobile/src/context/AuthContext.tsx) retrieves the stored JWT token, attaches it to the HTTP client, and validates the session via `GET /api/v1/me`.
-- If valid, the user transitions directly to the `MainNavigator`.
-- If invalid or expired, the session is securely cleared and the user is routed to `LoginScreen`.
-
-### API Authentication Headers & 401 Handling
-- Centralized Axios client ([`src/api/client.ts`](file:///d:/JAVA/Projects/ExpenseGuard/mobile/src/api/client.ts)) automatically attaches `Authorization: Bearer <accessToken>` to every outbound request.
-- A response interceptor monitors `401 Unauthorized` responses, triggering automatic session cleanup and routing back to `AuthNavigator`.
-
 ---
 
-## 9. Android Emulator Networking
-
-> [!IMPORTANT]
-> Inside the standard Android Emulator VM, `localhost` refers to the emulator's virtual device itself, **not** your development host computer.
-
-To allow the Android emulator to reach the Spring Boot backend running on your host machine:
-- **API Base URL**: `http://10.0.2.2:8081`
-- **Health Endpoint**: `http://10.0.2.2:8081/api/v1/health`
-
----
-
-## 10. Physical Device Networking
-
-When testing on a physical mobile device:
-1. Connect both your development machine and your mobile phone to the **same local Wi-Fi network**.
-2. Find your development machine's local IP address (e.g., `192.168.1.50`).
-3. Configure `API_BASE_URL` to point to your machine's LAN IP:
-   ```env
-   API_BASE_URL=http://192.168.1.50:8081
-   ```
-4. Ensure port `8081` is not blocked by your host computer's firewall.
-
----
-
-## 11. Health Check
-
-The mobile application includes a built-in health diagnostic feature to verify frontend-to-backend REST connectivity:
-
-- **Endpoint**: `GET /api/v1/health`
-- **Hook**: [`src/hooks/useHealthCheck.ts`](file:///d:/JAVA/Projects/ExpenseGuard/mobile/src/hooks/useHealthCheck.ts)
-- **Screen**: [`src/screens/debug/HealthCheckScreen.tsx`](file:///d:/JAVA/Projects/ExpenseGuard/mobile/src/screens/debug/HealthCheckScreen.tsx)
-- **Dashboard Banner**: Displays real-time connection status (`CONNECTED`, `LOADING`, `FAILED`) and timestamp directly on the main dashboard.
-
----
-
-## 12. Project Structure
+## 10. Project Structure
 
 ```
 mobile/
 ├── __tests__/
 │   ├── App.test.tsx            # Navigation render test
-│   └── auth.test.ts            # Authentication, token storage & security tests
+│   ├── auth.test.ts            # Auth & token security unit tests
+│   └── expense.test.ts         # Core expense management unit tests
 │
 ├── src/
 │   ├── api/
 │   │   ├── client.ts           # Axios HTTP client with Bearer token & 401 interceptors
 │   │   └── endpoints/
+│   │       ├── accountApi.ts   # Account endpoints (CRUD)
 │   │       ├── authApi.ts      # Auth endpoints (register, login, getCurrentUser)
-│   │       └── health.ts       # Health check API endpoint call
+│   │       ├── categoryApi.ts  # Category endpoints (CRUD)
+│   │       ├── health.ts       # Health check API endpoint call
+│   │       └── transactionApi.ts # Transaction endpoints (CRUD & paginated filtering)
 │   │
 │   ├── components/             # Reusable core UI components
-│   │   ├── AppText.tsx         # Typography wrapper
+│   │   ├── AccountModal.tsx    # Create/Edit Account modal
+│   │   ├── CategoryModal.tsx   # Create/Edit Category modal
 │   │   ├── ErrorMessage.tsx    # Error display with retry action
-│   │   ├── LoadingIndicator.tsx # Spinner & loading message
+│   │   ├── LoadingIndicator.tsx # Activity indicator
 │   │   ├── PrimaryButton.tsx   # Styled action button
-│   │   └── ScreenContainer.tsx # SafeArea & ScrollView screen container
+│   │   ├── ScreenContainer.tsx # SafeArea & ScrollView wrapper
+│   │   ├── TransactionFilterModal.tsx # Multi-criteria transaction filter sheet
+│   │   └── TransactionForm.tsx # Reusable expense & income form
 │   │
 │   ├── config/
 │   │   └── env.ts              # Environment & API host resolution
@@ -164,33 +157,32 @@ mobile/
 │   │   └── AuthContext.tsx     # Centralized auth state & session restoration provider
 │   │
 │   ├── hooks/
+│   │   ├── useAccounts.ts      # Custom hook for account CRUD state
 │   │   ├── useAuth.ts          # AuthContext hook
-│   │   └── useHealthCheck.ts   # Custom hook for backend connectivity health check
+│   │   ├── useCategories.ts    # Custom hook for category CRUD state
+│   │   ├── useHealthCheck.ts   # Backend connectivity health hook
+│   │   └── useTransactions.ts  # Custom hook for paginated transaction state & filters
 │   │
 │   ├── navigation/             # React Navigation stack & tab navigators
-│   │   ├── AppNavigator.tsx    # Root stack navigator with auth state guard
+│   │   ├── AppNavigator.tsx    # Root stack navigator with auth & transaction routes
 │   │   ├── AuthNavigator.tsx   # Login & Register stack navigator
-│   │   ├── MainNavigator.tsx   # Main bottom tab navigator
+│   │   ├── MainNavigator.tsx   # Main bottom tab navigator (Dashboard, Transactions, Accounts, Categories, Profile)
 │   │   └── types.ts            # Navigation parameter list types
 │   │
 │   ├── screens/
-│   │   ├── auth/               # Auth screens (LoginScreen, RegisterScreen, ProfileScreen)
-│   │   ├── dashboard/          # Main dashboard screen
-│   │   ├── transactions/       # Transactions screen placeholder
-│   │   ├── accounts/           # Accounts screen placeholder
-│   │   ├── categories/         # Categories screen placeholder
-│   │   ├── budgets/            # Budgets screen placeholder
-│   │   ├── analytics/          # Analytics screen placeholder
-│   │   ├── receipts/           # Receipts screen placeholder
-│   │   ├── notifications/      # Notifications screen placeholder
-│   │   └── debug/              # Backend health check diagnostics screen
+│   │   ├── accounts/           # AccountsScreen (Account list & CRUD)
+│   │   ├── auth/               # LoginScreen, RegisterScreen, ProfileScreen
+│   │   ├── categories/         # CategoriesScreen (Expense & Income categories)
+│   │   ├── dashboard/          # DashboardScreen (Net balance, recent activity, quick actions)
+│   │   ├── debug/              # HealthCheckScreen
+│   │   └── transactions/       # TransactionsScreen, AddExpenseScreen, AddIncomeScreen, EditTransactionScreen
 │   │
 │   ├── storage/
 │   │   └── secureStorage.ts    # Secure token & session storage (react-native-keychain)
 │   │
 │   ├── theme/                  # Theme tokens (colors, spacing, typography, borderRadius)
-│   ├── types/                  # TypeScript interfaces (api, auth, health, navigation)
-│   └── utils/                  # Centralized error parser
+│   ├── types/                  # TypeScript interfaces (account, api, auth, category, dashboard, health, navigation, transaction)
+│   └── utils/                  # Currency, date, and error helpers
 │
 ├── App.tsx                     # React Native root component
 ├── .env.example                # Sample environment file template
@@ -202,12 +194,18 @@ mobile/
 
 ---
 
-## Type Checking & Testing
+## Type Checking, Linting & Testing
 
 Run TypeScript compilation check:
 
 ```bash
 npx tsc --noEmit
+```
+
+Run ESLint check:
+
+```bash
+npm run lint
 ```
 
 Run frontend unit tests:

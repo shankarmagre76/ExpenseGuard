@@ -5,9 +5,13 @@ import { RootStackParamList } from '../types/navigation';
 import { AuthNavigator } from './AuthNavigator';
 import { MainNavigator } from './MainNavigator';
 import { HealthCheckScreen } from '../screens/debug/HealthCheckScreen';
+import { AddExpenseScreen } from '../screens/transactions/AddExpenseScreen';
+import { AddIncomeScreen } from '../screens/transactions/AddIncomeScreen';
+import { EditTransactionScreen } from '../screens/transactions/EditTransactionScreen';
 import { useAuth } from '../hooks/useAuth';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { LoadingIndicator } from '../components/LoadingIndicator';
+import { colors } from '../theme';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 
@@ -26,7 +30,39 @@ export const AppNavigator: React.FC = () => {
     <NavigationContainer>
       <RootStack.Navigator screenOptions={{ headerShown: false }}>
         {status === 'authenticated' ? (
-          <RootStack.Screen name="Main" component={MainNavigator} />
+          <>
+            <RootStack.Screen name="Main" component={MainNavigator} />
+            <RootStack.Screen
+              name="AddExpense"
+              component={AddExpenseScreen}
+              options={{
+                headerShown: true,
+                title: 'Add Expense',
+                headerStyle: { backgroundColor: colors.surface },
+                headerTintColor: colors.textPrimary,
+              }}
+            />
+            <RootStack.Screen
+              name="AddIncome"
+              component={AddIncomeScreen}
+              options={{
+                headerShown: true,
+                title: 'Add Income',
+                headerStyle: { backgroundColor: colors.surface },
+                headerTintColor: colors.textPrimary,
+              }}
+            />
+            <RootStack.Screen
+              name="EditTransaction"
+              component={EditTransactionScreen}
+              options={{
+                headerShown: true,
+                title: 'Edit Transaction',
+                headerStyle: { backgroundColor: colors.surface },
+                headerTintColor: colors.textPrimary,
+              }}
+            />
+          </>
         ) : (
           <RootStack.Screen name="Auth" component={AuthNavigator} />
         )}
