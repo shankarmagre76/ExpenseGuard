@@ -76,7 +76,31 @@ ENV_NAME=development
 
 ---
 
-## 8. Android Emulator Networking
+## 8. Authentication Architecture
+
+ExpenseGuard Mobile integrates full JWT authentication with the Spring Boot REST endpoints:
+
+### Endpoints
+- **Registration**: `POST /api/v1/auth/register` (`name`, `email`, `password`)
+- **Login**: `POST /api/v1/auth/login` (`email`, `password`) → returns JWT `accessToken`
+- **Current User Profile**: `GET /api/v1/me` (requires Bearer token)
+
+### Secure Token Storage
+- JWT access tokens and user profile payloads are encrypted and stored using **`react-native-keychain`** via [`src/storage/secureStorage.ts`](file:///d:/JAVA/Projects/ExpenseGuard/mobile/src/storage/secureStorage.ts).
+- Passwords are **never** persisted or logged.
+
+### Session Restoration & Auto-Login
+- On application startup, [`AuthContext`](file:///d:/JAVA/Projects/ExpenseGuard/mobile/src/context/AuthContext.tsx) retrieves the stored JWT token, attaches it to the HTTP client, and validates the session via `GET /api/v1/me`.
+- If valid, the user transitions directly to the `MainNavigator`.
+- If invalid or expired, the session is securely cleared and the user is routed to `LoginScreen`.
+
+### API Authentication Headers & 401 Handling
+- Centralized Axios client ([`src/api/client.ts`](file:///d:/JAVA/Projects/ExpenseGuard/mobile/src/api/client.ts)) automatically attaches `Authorization: Bearer <accessToken>` to every outbound request.
+- A response interceptor monitors `401 Unauthorized` responses, triggering automatic session cleanup and routing back to `AuthNavigator`.
+
+---
+
+## 9. Android Emulator Networking
 
 > [!IMPORTANT]
 > Inside the standard Android Emulator VM, `localhost` refers to the emulator's virtual device itself, **not** your development host computer.
@@ -87,7 +111,7 @@ To allow the Android emulator to reach the Spring Boot backend running on your h
 
 ---
 
-## 9. Physical Device Networking
+## 10. Physical Device Networking
 
 When testing on a physical mobile device:
 1. Connect both your development machine and your mobile phone to the **same local Wi-Fi network**.
@@ -100,7 +124,7 @@ When testing on a physical mobile device:
 
 ---
 
-## 10. Health Check
+## 11. Health Check
 
 The mobile application includes a built-in health diagnostic feature to verify frontend-to-backend REST connectivity:
 
@@ -111,14 +135,19 @@ The mobile application includes a built-in health diagnostic feature to verify f
 
 ---
 
-## 11. Project Structure
+## 12. Project Structure
 
 ```
 mobile/
+├── __tests__/
+│   ├── App.test.tsx            # Navigation render test
+│   └── auth.test.ts            # Authentication, token storage & security tests
+│
 ├── src/
 │   ├── api/
-│   │   ├── client.ts           # Centralized Axios HTTP client (baseURL, interceptors, timeouts, error mapping)
+│   │   ├── client.ts           # Axios HTTP client with Bearer token & 401 interceptors
 │   │   └── endpoints/
+│   │       ├── authApi.ts      # Auth endpoints (register, login, getCurrentUser)
 │   │       └── health.ts       # Health check API endpoint call
 │   │
 │   ├── components/             # Reusable core UI components
@@ -131,11 +160,15 @@ mobile/
 │   ├── config/
 │   │   └── env.ts              # Environment & API host resolution
 │   │
+│   ├── context/
+│   │   └── AuthContext.tsx     # Centralized auth state & session restoration provider
+│   │
 │   ├── hooks/
+│   │   ├── useAuth.ts          # AuthContext hook
 │   │   └── useHealthCheck.ts   # Custom hook for backend connectivity health check
 │   │
 │   ├── navigation/             # React Navigation stack & tab navigators
-│   │   ├── AppNavigator.tsx    # Root stack navigator
+│   │   ├── AppNavigator.tsx    # Root stack navigator with auth state guard
 │   │   ├── AuthNavigator.tsx   # Login & Register stack navigator
 │   │   ├── MainNavigator.tsx   # Main bottom tab navigator
 │   │   └── types.ts            # Navigation parameter list types
@@ -152,10 +185,11 @@ mobile/
 │   │   ├── notifications/      # Notifications screen placeholder
 │   │   └── debug/              # Backend health check diagnostics screen
 │   │
-│   ├── services/               # Services layer
-│   ├── storage/                # Local storage layer
+│   ├── storage/
+│   │   └── secureStorage.ts    # Secure token & session storage (react-native-keychain)
+│   │
 │   ├── theme/                  # Theme tokens (colors, spacing, typography, borderRadius)
-│   ├── types/                  # TypeScript interfaces (api, health, navigation)
+│   ├── types/                  # TypeScript interfaces (api, auth, health, navigation)
 │   └── utils/                  # Centralized error parser
 │
 ├── App.tsx                     # React Native root component
@@ -168,10 +202,16 @@ mobile/
 
 ---
 
-## Type Checking & Verification
+## Type Checking & Testing
 
 Run TypeScript compilation check:
 
 ```bash
 npx tsc --noEmit
+```
+
+Run frontend unit tests:
+
+```bash
+npm test
 ```

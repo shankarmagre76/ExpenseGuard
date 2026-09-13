@@ -1,9 +1,14 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { getApiBaseUrl, ENV } from '../config/env';
 import { parseApiError } from '../utils/errorHandler';
+import { getSecureToken } from '../storage/secureStorage';
+
+type UnauthorizedHandler = () => void;
 
 class ApiClient {
   private instance: AxiosInstance;
+  private unauthorizedHandler: UnauthorizedHandler | null = null;
+  private activeToken: string | null = null;
 
   constructor() {
     this.instance = axios.create({
@@ -18,11 +23,41 @@ class ApiClient {
     this.setupInterceptors();
   }
 
+  public setAuthToken(token: string | null): void {
+    this.activeToken = token;
+    if (token) {
+      this.instance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    } else {
+      delete this.instance.defaults.headers.common['Authorization'];
+    }
+  }
+
+  public setUnauthorizedHandler(handler: UnauthorizedHandler): void {
+    this.unauthorizedHandler = handler;
+  }
+
   private setupInterceptors(): void {
+    // Request Interceptor: Attach Bearer token from storage if available
+    this.instance.interceptors.request.use(
+      async (config: InternalAxiosRequestConfig) => {
+        const token = this.activeToken || (await getSecureToken());
+        if (token && config.headers && !config.headers.Authorization) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+      },
+      (error) => Promise.reject(error)
+    );
+
+    // Response Interceptor: Parse errors & handle 401 Unauthorized
     this.instance.interceptors.response.use(
       (response: AxiosResponse) => response,
       (error) => {
-        return Promise.reject(parseApiError(error));
+        const parsed = parseApiError(error);
+        if (parsed.status === 401 && this.unauthorizedHandler) {
+          this.unauthorizedHandler();
+        }
+        return Promise.reject(parsed);
       }
     );
   }

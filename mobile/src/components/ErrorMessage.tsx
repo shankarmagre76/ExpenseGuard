@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, ViewStyle } from 'react-native';
 import { AppText } from './AppText';
 import { PrimaryButton } from './PrimaryButton';
 import { colors, spacing, borderRadius } from '../theme';
@@ -8,15 +8,17 @@ export interface ErrorMessageProps {
   title?: string;
   message: string;
   onRetry?: () => void;
+  style?: ViewStyle;
 }
 
 export const ErrorMessage: React.FC<ErrorMessageProps> = ({
   title = 'Connection Error',
   message,
   onRetry,
+  style,
 }) => {
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, style]}>
       <AppText variant="subheader" color={colors.error} bold style={styles.title}>
         {title}
       </AppText>

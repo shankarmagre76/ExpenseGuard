@@ -5,15 +5,31 @@ import { RootStackParamList } from '../types/navigation';
 import { AuthNavigator } from './AuthNavigator';
 import { MainNavigator } from './MainNavigator';
 import { HealthCheckScreen } from '../screens/debug/HealthCheckScreen';
+import { useAuth } from '../hooks/useAuth';
+import { ScreenContainer } from '../components/ScreenContainer';
+import { LoadingIndicator } from '../components/LoadingIndicator';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 export const AppNavigator: React.FC = () => {
+  const { status } = useAuth();
+
+  if (status === 'restoring') {
+    return (
+      <ScreenContainer>
+        <LoadingIndicator message="Restoring ExpenseGuard session..." />
+      </ScreenContainer>
+    );
+  }
+
   return (
     <NavigationContainer>
       <RootStack.Navigator screenOptions={{ headerShown: false }}>
-        <RootStack.Screen name="Main" component={MainNavigator} />
-        <RootStack.Screen name="Auth" component={AuthNavigator} />
+        {status === 'authenticated' ? (
+          <RootStack.Screen name="Main" component={MainNavigator} />
+        ) : (
+          <RootStack.Screen name="Auth" component={AuthNavigator} />
+        )}
         <RootStack.Screen
           name="HealthCheck"
           component={HealthCheckScreen}
