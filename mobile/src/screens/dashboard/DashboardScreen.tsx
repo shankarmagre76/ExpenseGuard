@@ -14,6 +14,8 @@ import { useAccounts } from '../../hooks/useAccounts';
 import { useTransactions } from '../../hooks/useTransactions';
 import { useBudgets } from '../../hooks/useBudgets';
 import { useHealthCheck } from '../../hooks/useHealthCheck';
+import { useNotifications } from '../../hooks/useNotifications';
+import { NotificationBadge } from '../../components/NotificationBadge';
 import { BudgetProgressBar } from '../../components/BudgetProgressBar';
 import { colors, spacing, borderRadius } from '../../theme';
 import { formatCurrency } from '../../utils/currencyFormatter';
@@ -24,10 +26,11 @@ export const DashboardScreen: React.FC<any> = ({ navigation }) => {
   const { transactions, loading: txLoading, error: txError, refresh: refreshTransactions } = useTransactions({ size: 5 });
   const { budgets, refreshBudgets } = useBudgets();
   const { status: healthStatus } = useHealthCheck();
+  const { unreadCount, refreshNotifications } = useNotifications();
 
   const handleRefresh = useCallback(async () => {
-    await Promise.all([refreshAccounts(), refreshTransactions(), refreshBudgets()]);
-  }, [refreshAccounts, refreshTransactions, refreshBudgets]);
+    await Promise.all([refreshAccounts(), refreshTransactions(), refreshBudgets(), refreshNotifications()]);
+  }, [refreshAccounts, refreshTransactions, refreshBudgets, refreshNotifications]);
 
   // Compute aggregated total net balance from backend accounts response
   const totalBalance = accounts.reduce((acc, account) => {
@@ -53,6 +56,15 @@ export const DashboardScreen: React.FC<any> = ({ navigation }) => {
         refreshControl={<RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />}
         showsVerticalScrollIndicator={false}
       >
+        {/* Header Bar with Notification Icon */}
+        <View style={styles.headerBar}>
+          <AppText variant="header" bold>Dashboard</AppText>
+          <NotificationBadge
+            unreadCount={unreadCount}
+            onPress={() => navigation.navigate('Notifications')}
+          />
+        </View>
+
         {/* Total Net Balance Card */}
         <View style={styles.heroCard}>
           <AppText variant="caption" color={colors.primaryLight} style={styles.heroLabel}>
@@ -225,6 +237,13 @@ export const DashboardScreen: React.FC<any> = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  headerBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+    marginTop: spacing.xs,
+  },
   heroCard: {
     backgroundColor: colors.primary,
     borderRadius: borderRadius.lg,

@@ -131,7 +131,32 @@ ExpenseGuard Mobile supports automated recurring transaction management:
 
 ---
 
-## 11. Authentication Architecture
+## 11. Receipt Upload & OCR Scanner (Phase 5.2)
+
+ExpenseGuard Mobile integrates receipt scanning and OCR parsing:
+
+- **Image Picker & Camera Integration**: Launch camera or photo gallery to capture receipt images (`react-native-image-picker`).
+- **Multipart Receipt Upload**: Upload receipt images with multipart form-data to `POST /api/v1/receipts/upload`.
+- **OCR Status & Extraction**: View extracted merchant name, transaction date, total amount, and confidence score.
+- **Review & Convert**: Pre-fill transaction form with extracted receipt data for instant expense logging.
+
+---
+
+## 12. In-App Notifications Engine (Phase 5.3)
+
+ExpenseGuard Mobile derives in-app notification alerts dynamically from backend states:
+
+- **Derived Notification Types**:
+  - `BUDGET_EXCEEDED`: Over-budget alert when spending exceeds allocated budget (utilization >= 100%).
+  - `BUDGET_WARNING`: Early warning alert when spending reaches 80% to 99.9% of budget.
+  - `RECURRING_DUE`: Due alert when active recurring payment schedule `nextRunDate` is today or past due.
+  - `SYSTEM_INFO`: Connectivity alert verifying backend server status on port 8081.
+- **Notification Badge Component**: [`NotificationBadge.tsx`](file:///d:/JAVA/Projects/ExpenseGuard/mobile/src/components/NotificationBadge.tsx) bell icon with real-time unread badge count on the dashboard header.
+- **Notifications Screen**: Screen allowing users to view, mark read, mark all read, and delete notifications.
+
+---
+
+## 13. Authentication Architecture
 
 ExpenseGuard Mobile integrates full JWT authentication with the Spring Boot REST endpoints:
 

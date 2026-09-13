@@ -10,6 +10,7 @@ import { AddIncomeScreen } from '../screens/transactions/AddIncomeScreen';
 import { EditTransactionScreen } from '../screens/transactions/EditTransactionScreen';
 import { ReceiptUploadScreen } from '../screens/receipt/ReceiptUploadScreen';
 import { OcrReviewScreen } from '../screens/receipt/OcrReviewScreen';
+import { NotificationsScreen } from '../screens/notifications/NotificationsScreen';
 import { useAuth } from '../hooks/useAuth';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { LoadingIndicator } from '../components/LoadingIndicator';
@@ -80,6 +81,16 @@ export const AppNavigator: React.FC = () => {
               options={{
                 headerShown: true,
                 title: 'Review OCR Data',
+                headerStyle: { backgroundColor: colors.surface },
+                headerTintColor: colors.textPrimary,
+              }}
+            />
+            <RootStack.Screen
+              name="Notifications"
+              component={NotificationsScreen}
+              options={{
+                headerShown: true,
+                title: 'Notifications',
                 headerStyle: { backgroundColor: colors.surface },
                 headerTintColor: colors.textPrimary,
               }}

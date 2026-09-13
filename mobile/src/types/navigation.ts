@@ -25,4 +25,5 @@ export type RootStackParamList = {
   EditTransaction: { transactionId: string };
   ReceiptUpload: undefined;
   OcrReview: { receipt: ReceiptResponse };
+  Notifications: undefined;
 };
