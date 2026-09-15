@@ -137,6 +137,16 @@ export const TransactionsScreen: React.FC<Props> = ({ navigation }) => {
         </View>
 
         <View style={styles.cardFooter}>
+          {item.syncStatus === 'CONFLICT' && item.clientOperationId ? (
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={() => navigation.navigate('ConflictResolution', { clientOperationId: item.clientOperationId! })}
+            >
+              <AppText variant="caption" color={colors.warning} bold>
+                ⚡ Resolve Conflict
+              </AppText>
+            </TouchableOpacity>
+          ) : null}
           {item.syncStatus === 'FAILED' && item.clientOperationId ? (
             <TouchableOpacity
               style={styles.actionBtn}

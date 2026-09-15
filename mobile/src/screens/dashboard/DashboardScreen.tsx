@@ -28,7 +28,7 @@ export const DashboardScreen: React.FC<any> = ({ navigation }) => {
   const { budgets, refreshBudgets } = useBudgets();
   const { status: healthStatus } = useHealthCheck();
   const { unreadCount, refreshNotifications } = useNotifications();
-  const { isOnline, isSyncing, pendingCount, failedCount, triggerSync } = useContext(SyncContext);
+  const { isOnline, isSyncing, pendingCount, failedCount, conflictCount, triggerSync } = useContext(SyncContext);
 
   const handleRefresh = useCallback(async () => {
     await Promise.all([refreshAccounts(), refreshTransactions(), refreshBudgets(), refreshNotifications(), triggerSync()]);
@@ -69,9 +69,11 @@ export const DashboardScreen: React.FC<any> = ({ navigation }) => {
 
         {/* Sync Status Banner */}
         <View style={styles.syncBanner}>
-          <AppText variant="caption" color={!isOnline ? colors.warning : pendingCount > 0 ? colors.warning : failedCount > 0 ? colors.error : colors.success} bold>
+          <AppText variant="caption" color={!isOnline ? colors.warning : conflictCount > 0 ? colors.warning : pendingCount > 0 ? colors.warning : failedCount > 0 ? colors.error : colors.success} bold>
             {!isOnline
               ? '📶 Offline mode — changes saved locally'
+              : conflictCount > 0
+              ? `⚡ ${conflictCount} transaction(s) need attention`
               : pendingCount > 0
               ? `⏳ ${pendingCount} transaction(s) pending sync`
               : failedCount > 0
@@ -86,6 +88,21 @@ export const DashboardScreen: React.FC<any> = ({ navigation }) => {
             </TouchableOpacity>
           ) : null}
         </View>
+
+        {/* Conflict Resolution Prompt */}
+        {conflictCount > 0 && (
+          <TouchableOpacity
+            style={styles.conflictCard}
+            onPress={() => navigation.navigate('ConflictList')}
+          >
+            <AppText variant="body" bold color={colors.warning}>
+              ⚡ {conflictCount} transaction{conflictCount > 1 ? 's' : ''} need attention
+            </AppText>
+            <AppText variant="caption" color={colors.textSecondary}>
+              Tap to review offline conflict{conflictCount > 1 ? 's' : ''} and resolve →
+            </AppText>
+          </TouchableOpacity>
+        )}
 
         {/* Total Net Balance Card */}
         <View style={styles.heroCard}>
@@ -386,5 +403,13 @@ const styles = StyleSheet.create({
   syncNowBtn: {
     paddingHorizontal: spacing.xs,
     paddingVertical: 2,
+  },
+  conflictCard: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    borderWidth: 1.5,
+    borderColor: colors.warning,
   },
 });

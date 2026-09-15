@@ -26,4 +26,6 @@ export type RootStackParamList = {
   ReceiptUpload: undefined;
   OcrReview: { receipt: ReceiptResponse };
   Notifications: undefined;
+  ConflictList: undefined;
+  ConflictResolution: { clientOperationId: string };
 };

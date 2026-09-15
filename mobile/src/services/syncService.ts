@@ -1,13 +1,18 @@
 import { processSyncTransaction } from '../api/endpoints/syncApi';
+import { getTransactionById } from '../api/endpoints/transactionApi';
 import {
   getPendingSyncQueue,
   updateOfflineTransactionStatus,
   getOfflineTransactions,
+  removeOfflineTransaction,
+  saveOfflineTransaction,
 } from '../storage/offlineStorage';
 import {
   SyncTransactionRequest,
   SyncTransactionResponse,
+  OfflineTransactionItem,
 } from '../types/offline';
+import { generateUUID } from '../utils/uuid';
 import { AppError } from '../types/api';
 
 export interface SyncResult {
@@ -52,6 +57,12 @@ class SyncService {
       pendingQueue.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
       for (const item of pendingQueue) {
+        // Skip items that are marked as CONFLICT
+        if (item.status === 'CONFLICT') {
+          conflictCount++;
+          continue;
+        }
+
         // Update status to SYNCING before calling API
         await updateOfflineTransactionStatus(item.clientOperationId, {
           status: 'SYNCING',
@@ -87,6 +98,7 @@ class SyncService {
           } else if (response.status === 'CONFLICT') {
             await updateOfflineTransactionStatus(item.clientOperationId, {
               status: 'CONFLICT',
+              version: response.serverVersion !== undefined ? response.serverVersion : item.version,
               errorCode: response.errorCode || 'CONFLICT',
               errorMessage: response.message || 'Conflict detected on server',
             });
@@ -105,10 +117,10 @@ class SyncService {
           const statusCode = appErr.status;
 
           if (statusCode === 409) {
-            // 409 Conflict
+            // 409 Conflict (version mismatch or payload mismatch)
             await updateOfflineTransactionStatus(item.clientOperationId, {
               status: 'CONFLICT',
-              errorCode: appErr.code || 'CONFLICT',
+              errorCode: appErr.code || 'TRANSACTION_CONFLICT',
               errorMessage: appErr.message || 'Conflict detected during sync',
             });
             conflictCount++;
@@ -152,6 +164,91 @@ class SyncService {
     } finally {
       this.isSyncingLock = false;
     }
+  }
+
+  public async resolveKeepServer(clientOperationId: string): Promise<void> {
+    await removeOfflineTransaction(clientOperationId);
+  }
+
+  public async resolveKeepLocal(clientOperationId: string, userId: string): Promise<SyncResult> {
+    const userItems = await getOfflineTransactions(userId);
+    const item = userItems.find((i) => i.clientOperationId === clientOperationId);
+    if (!item) {
+      throw new Error('Conflicting transaction record not found.');
+    }
+
+    let latestVersion = item.version;
+    if (item.transactionId) {
+      try {
+        const serverTx = await getTransactionById(item.transactionId);
+        if (serverTx && serverTx.version !== undefined) {
+          latestVersion = serverTx.version;
+        }
+      } catch {
+        // Fallback to existing item version if offline
+      }
+    }
+
+    // Remove old conflicting record
+    await removeOfflineTransaction(clientOperationId);
+
+    // Create fresh record with new clientOperationId to prevent payload hash mismatch
+    const newClientOpId = generateUUID();
+    const updatedItem: OfflineTransactionItem = {
+      ...item,
+      clientOperationId: newClientOpId,
+      version: latestVersion,
+      status: 'PENDING',
+      retryCount: 0,
+      errorCode: undefined,
+      errorMessage: undefined,
+      createdAt: new Date().toISOString(),
+    };
+
+    await saveOfflineTransaction(updatedItem);
+    return this.syncPendingOperations(userId);
+  }
+
+  public async resolveEditAndResync(
+    clientOperationId: string,
+    userId: string,
+    updatedFields: Partial<OfflineTransactionItem>
+  ): Promise<SyncResult> {
+    const userItems = await getOfflineTransactions(userId);
+    const item = userItems.find((i) => i.clientOperationId === clientOperationId);
+    if (!item) {
+      throw new Error('Conflicting transaction record not found.');
+    }
+
+    let latestVersion = item.version;
+    if (item.transactionId) {
+      try {
+        const serverTx = await getTransactionById(item.transactionId);
+        if (serverTx && serverTx.version !== undefined) {
+          latestVersion = serverTx.version;
+        }
+      } catch {
+        // Fallback to existing item version if offline
+      }
+    }
+
+    await removeOfflineTransaction(clientOperationId);
+
+    const newClientOpId = generateUUID();
+    const updatedItem: OfflineTransactionItem = {
+      ...item,
+      ...updatedFields,
+      clientOperationId: newClientOpId,
+      version: latestVersion,
+      status: 'PENDING',
+      retryCount: 0,
+      errorCode: undefined,
+      errorMessage: undefined,
+      createdAt: new Date().toISOString(),
+    };
+
+    await saveOfflineTransaction(updatedItem);
+    return this.syncPendingOperations(userId);
   }
 
   public async getSyncSummary(userId: string) {
