@@ -1,200 +1,67 @@
 # ExpenseGuard
 
-ExpenseGuard is a comprehensive, production-grade expense management mobile application built with **React Native + TypeScript** on the frontend and **Spring Boot + Java 21 + PostgreSQL** on the backend.
+ExpenseGuard is a full-stack personal expense and financial management application built using Java, Spring Boot, Spring Security, Hibernate/JPA, PostgreSQL, React Native, and TypeScript. It enables users to securely manage accounts, income and expenses, categories, monthly budgets, recurring transactions, financial analytics, and receipt OCR. The application also supports offline transaction management with synchronization and conflict resolution, ensuring reliable data handling even with limited connectivity. JWT-based authentication, resource ownership validation, secure token storage, idempotent synchronization, Docker, automated testing, and CI/CD are implemented to provide a secure and production-oriented architecture.
 
-It features core expense/income management, multi-account tracking, category budget utilization analytics, active recurring transaction scheduling, receipt OCR scanning, offline synchronization with optimistic locking conflict resolution, and containerized Docker deployment.
+## Features
 
----
+- User registration and login
+- JWT-based authentication
+- Secure token storage
+- User profile management
+- Account management
+- Income and expense tracking
+- Expense and income categories
+- Transaction filtering and pagination
+- Monthly budgets
+- Budget utilization tracking
+- Financial analytics
+- Recurring transactions
+- Receipt upload and OCR
+- Offline transaction creation and synchronization
+- Conflict detection and resolution
+- Notification integration
+- Docker support
+- CI/CD pipeline
+- Automated backend and mobile testing
 
-## Technical Stack & Architecture
+## Technology Stack
 
-### Mobile App (`/mobile`)
-- **Core**: React Native (v0.74+), TypeScript (v5.0+)
-- **Navigation**: React Navigation (Native Stack + Bottom Tabs)
-- **API Client**: Axios with Bearer JWT interceptors & error transformation
-- **Local Persistence**: `@react-native-async-storage/async-storage` for offline transaction queues
-- **Secure Token Storage**: `react-native-keychain` for encrypted JWT credentials
-- **Connectivity Monitoring**: `@react-native-community/netinfo`
-- **Testing**: Jest unit testing suite, ESLint type checking
+### Backend
 
-### Backend Service (`/backend`)
-- **Runtime**: Java 21 LTS, Spring Boot 3.3.4
-- **Database**: PostgreSQL 16 (H2 in-memory database for testing profile)
-- **Security**: Spring Security 6 with stateless JWT Bearer token authentication
-- **ORM & Data**: Spring Data JPA, Hibernate ORM with `@Version` optimistic locking
-- **Receipt Storage**: Local disk storage service (`uploads/receipts/`)
-- **Build & Package**: Apache Maven (`mvnw`), Docker & Docker Compose
-- **CI/CD**: GitHub Actions workflow
+- Java 21
+- Spring Boot
+- Spring Security
+- Spring Data JPA
+- Hibernate
+- PostgreSQL
+- JWT
+- Maven
+- Docker
+- Docker Compose
+- Spring Boot Actuator
 
----
+### Mobile
 
-## Repository Structure
+- React Native
+- TypeScript
+- React Navigation
+- Axios
+- React Native Keychain
+- AsyncStorage
+- NetInfo
+- React Native Image Picker
+- Jest
+- ESLint
 
-```
-ExpenseGuard/
-├── backend/                  # Spring Boot Java 21 REST API backend service
-│   ├── .github/              # GitHub Actions CI/CD workflows
-│   ├── .mvn/                 # Maven wrapper binaries
-│   ├── scripts/              # Health check and startup scripts
-│   ├── src/                  # Java source code & test suites
-│   ├── .dockerignore
-│   ├── .env.example          # Sample backend environment configuration
-│   ├── .gitignore
-│   ├── Dockerfile            # Multi-stage production Dockerfile
-│   ├── docker-compose.yml    # Compose stack (Spring Boot + PostgreSQL)
-│   ├── mvnw / mvnw.cmd       # Cross-platform Maven wrapper scripts
-│   ├── pom.xml               # Maven dependencies and build plugins
-│   └── README.md             # Backend-specific architectural guide
-│
-├── mobile/                   # React Native TypeScript mobile application
-│   ├── android/              # Native Android build configuration & Gradle wrapper
-│   ├── ios/                  # Native iOS Xcode project configuration & Podfile
-│   ├── src/                  # Application source code (api, components, screens, etc.)
-│   ├── __tests__/            # Jest unit test suites (78 tests)
-│   ├── .env.example          # Sample mobile environment configuration
-│   ├── .eslintrc.js          # ESLint rules configuration
-│   ├── .gitignore
-│   ├── .prettierrc.js        # Formatting configuration
-│   ├── app.json              # React Native app manifest
-│   ├── App.tsx               # Application root component
-│   ├── babel.config.js       # Babel compiler configuration
-│   ├── index.js              # Entry point registration
-│   ├── jest.config.js        # Jest runner configuration
-│   ├── metro.config.js       # Metro bundler configuration
-│   ├── package.json          # Node dependencies & scripts
-│   ├── tsconfig.json         # TypeScript compiler configuration
-│   └── README.md             # Mobile-specific setup & guide
-│
-└── README.md                 # Primary project documentation
-```
+## Architecture
 
----
-
-## Core Application Features
-
-1. **User Authentication & Isolation**: Register, login, and secure session management. All user financial data is strictly partitioned by `userId`.
-2. **Account Management**: Track balances across Checking, Savings, Credit Card, Cash, and Investment accounts with automatic balance updates.
-3. **Core Expense & Income Tracking**: Record, edit, filter, and delete transactions with instant balance and budget updates.
-4. **Budgets & Financial Analytics**: Monthly budget utilization progress indicators and spending distribution charts.
-5. **Recurring Transactions**: Daily, weekly, monthly, and yearly scheduled payments with manual execution ("Run Now").
-6. **Receipt Upload & OCR Parsing**: Scan receipt images, extract merchant/date/amount via OCR processing, and pre-fill expense forms upon user confirmation.
-7. **Offline Synchronization & Idempotency**: Queue transactions locally while offline with RFC4122 client operation UUIDs. SHA-256 payload canonical hashing prevents duplicate creation on network retries.
-8. **Optimistic Locking & Conflict Resolution**: Handles version mismatches (`TRANSACTION_CONFLICT`) and payload changes (`SYNC_OPERATION_PAYLOAD_MISMATCH`) via interactive resolution (Keep Server, Keep Local, Edit & Resync).
-
----
-
-## Environment Configuration
-
-### Backend Environment (`backend/.env`)
-Create `backend/.env` from `backend/.env.example`:
-```env
-PORT=8081
-SPRING_PROFILES_ACTIVE=prod
-POSTGRES_HOST=postgres
-POSTGRES_PORT=5432
-POSTGRES_DB=expenseguard
-POSTGRES_USER=expenseguard_user
-POSTGRES_PASSWORD=expenseguard_password
-JWT_SECRET=YourSuperSecret64CharacterJwtSigningKeyMustBeVeryLongAndSecure123!
-```
-
-### Mobile Environment (`mobile/.env`)
-Create `mobile/.env` from `mobile/.env.example`:
-```env
-API_BASE_URL=http://localhost:8081
-```
-
----
-
-## Setup & Running Locally
-
-### Prerequisites
-- Java 21 JDK
-- Node.js (v18+) & npm (v9+)
-- Docker & Docker Compose
-- Android Studio / Xcode (optional for native emulator builds)
-
-### 1. Running the Backend Service
-Using local Maven wrapper:
-```powershell
-cd backend
-.\mvnw.cmd spring-boot:run
-```
-The API server will listen at `http://localhost:8081/api/v1/health`.
-
-### 2. Running the Mobile Application
-Install dependencies:
-```bash
-cd mobile
-npm install
-```
-
-Start the Metro Bundler:
-```bash
-npm start
-```
-
-Launch Android / iOS runner:
-```bash
-npm run android
-# or
-npm run ios
-```
-
----
-
-## Docker & Containerization
-
-Build and run the entire stack (PostgreSQL + Spring Boot Backend) using Docker Compose:
-```bash
-cd backend
-docker compose up --build -d
-```
-
-Check health status:
-```bash
-curl http://localhost:8081/api/v1/health
-```
-
-Stop services:
-```bash
-docker compose down
-```
-
----
-
-## Testing & Quality Assurance
-
-### Mobile Frontend Tests
-```bash
-cd mobile
-npx tsc --noEmit           # Type check (0 errors)
-npm run lint               # Lint check (0 errors/0 warnings)
-npm test -- --runInBand    # Execute Jest test suite (78 tests passing)
-```
-
-### Backend Tests
-```powershell
-cd backend
-.\mvnw.cmd clean test       # Execute JUnit/Integration test suite (297 tests passing)
-```
-
----
-
-## CI/CD Pipeline
-
-The GitHub Actions workflow (`backend/.github/workflows/ci.yml`) automatically executes on every push to `main`:
-1. Checks out repository source code.
-2. Sets up Java 21 JDK environment.
-3. Runs the complete backend test suite (`mvn clean test`).
-4. Packages the production Spring Boot executable JAR.
-5. Builds the production Docker image.
-6. Launches container stack and polls the `/api/v1/health` endpoint for verification.
-
----
-
-## Known Limitations
-
-1. **Backend Notification API**: The backend service currently does not expose a notification REST endpoint. The mobile application handles 404 responses gracefully without crashing or fabricating fake alerts.
-2. **Offline Master Schema Changes**: Creating or modifying financial accounts, category taxonomies, or budget limits requires active server connection for authorization and validation.
-3. **Receipt OCR Network Connection**: Scanning receipts and performing OCR text extraction requires an active internet connection. Offline scan attempts trigger a clear user alert.
+```text
+React Native + TypeScript
+          |
+          | REST API / JSON
+          v
+Spring Boot + Java 21
+          |
+          | JPA / Hibernate
+          v
+PostgreSQL
