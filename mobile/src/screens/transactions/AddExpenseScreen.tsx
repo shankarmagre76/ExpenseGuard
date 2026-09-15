@@ -6,7 +6,7 @@ import { PrimaryButton } from '../../components/PrimaryButton';
 import { TransactionForm } from '../../components/TransactionForm';
 import { useAccounts } from '../../hooks/useAccounts';
 import { useCategories } from '../../hooks/useCategories';
-import { createTransaction } from '../../api/endpoints/transactionApi';
+import { useTransactions } from '../../hooks/useTransactions';
 import { TransactionRequest } from '../../types/transaction';
 import { spacing } from '../../theme';
 
@@ -15,9 +15,10 @@ type Props = NativeStackScreenProps<RootStackParamList, 'AddExpense'>;
 export const AddExpenseScreen: React.FC<Props> = ({ navigation }) => {
   const { accounts } = useAccounts();
   const { categories } = useCategories('EXPENSE');
+  const { addTransaction } = useTransactions();
 
   const handleSubmit = async (data: TransactionRequest) => {
-    await createTransaction(data);
+    await addTransaction(data);
     navigation.goBack();
   };
 

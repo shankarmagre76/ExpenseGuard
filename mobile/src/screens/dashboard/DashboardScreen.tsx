@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useContext } from 'react';
 import {
   View,
   StyleSheet,
@@ -15,6 +15,7 @@ import { useTransactions } from '../../hooks/useTransactions';
 import { useBudgets } from '../../hooks/useBudgets';
 import { useHealthCheck } from '../../hooks/useHealthCheck';
 import { useNotifications } from '../../hooks/useNotifications';
+import { SyncContext } from '../../context/SyncContext';
 import { NotificationBadge } from '../../components/NotificationBadge';
 import { BudgetProgressBar } from '../../components/BudgetProgressBar';
 import { colors, spacing, borderRadius } from '../../theme';
@@ -27,10 +28,11 @@ export const DashboardScreen: React.FC<any> = ({ navigation }) => {
   const { budgets, refreshBudgets } = useBudgets();
   const { status: healthStatus } = useHealthCheck();
   const { unreadCount, refreshNotifications } = useNotifications();
+  const { isOnline, isSyncing, pendingCount, failedCount, triggerSync } = useContext(SyncContext);
 
   const handleRefresh = useCallback(async () => {
-    await Promise.all([refreshAccounts(), refreshTransactions(), refreshBudgets(), refreshNotifications()]);
-  }, [refreshAccounts, refreshTransactions, refreshBudgets, refreshNotifications]);
+    await Promise.all([refreshAccounts(), refreshTransactions(), refreshBudgets(), refreshNotifications(), triggerSync()]);
+  }, [refreshAccounts, refreshTransactions, refreshBudgets, refreshNotifications, triggerSync]);
 
   // Compute aggregated total net balance from backend accounts response
   const totalBalance = accounts.reduce((acc, account) => {
@@ -63,6 +65,26 @@ export const DashboardScreen: React.FC<any> = ({ navigation }) => {
             unreadCount={unreadCount}
             onPress={() => navigation.navigate('Notifications')}
           />
+        </View>
+
+        {/* Sync Status Banner */}
+        <View style={styles.syncBanner}>
+          <AppText variant="caption" color={!isOnline ? colors.warning : pendingCount > 0 ? colors.warning : failedCount > 0 ? colors.error : colors.success} bold>
+            {!isOnline
+              ? '📶 Offline mode — changes saved locally'
+              : pendingCount > 0
+              ? `⏳ ${pendingCount} transaction(s) pending sync`
+              : failedCount > 0
+              ? `⚠️ ${failedCount} transaction(s) sync failed`
+              : '✓ All transactions synced'}
+          </AppText>
+          {isOnline && (pendingCount > 0 || failedCount > 0) ? (
+            <TouchableOpacity style={styles.syncNowBtn} onPress={() => triggerSync()} disabled={isSyncing}>
+              <AppText variant="caption" color={colors.primary} bold>
+                {isSyncing ? 'Syncing...' : 'Sync Now'}
+              </AppText>
+            </TouchableOpacity>
+          ) : null}
         </View>
 
         {/* Total Net Balance Card */}
@@ -348,5 +370,21 @@ const styles = StyleSheet.create({
   budgetWidgetHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  syncBanner: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  syncNowBtn: {
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 2,
   },
 });

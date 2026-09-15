@@ -38,6 +38,7 @@ export const TransactionsScreen: React.FC<Props> = ({ navigation }) => {
     clearFilters,
     loadMore,
     deleteTransaction,
+    retrySingleSync,
   } = useTransactions();
 
   const { accounts } = useAccounts();
@@ -69,6 +70,38 @@ export const TransactionsScreen: React.FC<Props> = ({ navigation }) => {
     return acc ? acc.name : 'Account';
   };
 
+  const renderSyncBadge = (status?: string, errorMsg?: string) => {
+    if (!status || status === 'SYNCED') {
+      return (
+        <AppText variant="caption" color={colors.success} bold>
+          ✓ Synced
+        </AppText>
+      );
+    }
+    if (status === 'PENDING' || status === 'SYNCING') {
+      return (
+        <AppText variant="caption" color={colors.warning} bold>
+          ⏳ Pending sync
+        </AppText>
+      );
+    }
+    if (status === 'FAILED') {
+      return (
+        <AppText variant="caption" color={colors.error} bold numberOfLines={1}>
+          ⚠️ Sync failed{errorMsg ? `: ${errorMsg}` : ''}
+        </AppText>
+      );
+    }
+    if (status === 'CONFLICT') {
+      return (
+        <AppText variant="caption" color={colors.warning} bold numberOfLines={1}>
+          ⚡ Conflict: Modified on server
+        </AppText>
+      );
+    }
+    return null;
+  };
+
   const renderTransactionItem = ({ item }: { item: TransactionResponse }) => {
     const isIncome = item.type === 'INCOME';
     const amountColor = isIncome ? colors.success : colors.error;
@@ -91,6 +124,9 @@ export const TransactionsScreen: React.FC<Props> = ({ navigation }) => {
                 {getAccountName(item.accountId)} • {formatDateDisplay(item.transactionDate)}
               </AppText>
             </View>
+            <View style={styles.metaRow}>
+              {renderSyncBadge(item.syncStatus, item.syncErrorMessage)}
+            </View>
           </View>
 
           <View style={styles.rightCol}>
@@ -101,6 +137,16 @@ export const TransactionsScreen: React.FC<Props> = ({ navigation }) => {
         </View>
 
         <View style={styles.cardFooter}>
+          {item.syncStatus === 'FAILED' && item.clientOperationId ? (
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={() => retrySingleSync(item.clientOperationId!)}
+            >
+              <AppText variant="caption" color={colors.warning} bold>
+                Retry Sync
+              </AppText>
+            </TouchableOpacity>
+          ) : null}
           <TouchableOpacity
             style={styles.actionBtn}
             onPress={() => navigation.navigate('EditTransaction', { transactionId: item.id })}

@@ -25,6 +25,8 @@ export interface TransactionResponse {
   description?: string;
   clientOperationId?: string;
   version?: number;
+  syncStatus?: 'PENDING' | 'SYNCING' | 'SYNCED' | 'FAILED' | 'CONFLICT';
+  syncErrorMessage?: string;
   createdAt: string;
   updatedAt: string;
 }

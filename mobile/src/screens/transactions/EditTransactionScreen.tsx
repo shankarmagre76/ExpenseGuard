@@ -7,7 +7,8 @@ import { ErrorMessage } from '../../components/ErrorMessage';
 import { TransactionForm } from '../../components/TransactionForm';
 import { useAccounts } from '../../hooks/useAccounts';
 import { useCategories } from '../../hooks/useCategories';
-import { getTransactionById, updateTransaction } from '../../api/endpoints/transactionApi';
+import { useTransactions } from '../../hooks/useTransactions';
+import { getTransactionById } from '../../api/endpoints/transactionApi';
 import { TransactionResponse, TransactionRequest } from '../../types/transaction';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EditTransaction'>;
@@ -21,6 +22,7 @@ export const EditTransactionScreen: React.FC<Props> = ({ route, navigation }) =>
 
   const { accounts } = useAccounts();
   const { allCategories: categories } = useCategories();
+  const { transactions: localTransactions, editTransaction } = useTransactions();
 
   const loadTransaction = useCallback(async () => {
     setLoading(true);
@@ -29,18 +31,24 @@ export const EditTransactionScreen: React.FC<Props> = ({ route, navigation }) =>
       const data = await getTransactionById(transactionId);
       setTransaction(data);
     } catch (err: any) {
-      setError(err?.message || 'Failed to load transaction details.');
+      // Check if present in local transactions hook (offline record)
+      const foundLocal = localTransactions.find((tx) => tx.id === transactionId || tx.clientOperationId === transactionId);
+      if (foundLocal) {
+        setTransaction(foundLocal);
+      } else {
+        setError(err?.message || 'Failed to load transaction details.');
+      }
     } finally {
       setLoading(false);
     }
-  }, [transactionId]);
+  }, [transactionId, localTransactions]);
 
   useEffect(() => {
     loadTransaction();
   }, [loadTransaction]);
 
   const handleSubmit = async (data: TransactionRequest) => {
-    await updateTransaction(transactionId, data);
+    await editTransaction(transactionId, data);
     navigation.goBack();
   };
 

@@ -14,6 +14,7 @@ import { PrimaryButton } from '../../components/PrimaryButton';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
 import { ErrorMessage } from '../../components/ErrorMessage';
 import { useReceipts } from '../../hooks/useReceipts';
+import { networkService } from '../../services/networkService';
 import { SelectedImage } from '../../types/receipt';
 import { colors, spacing, borderRadius } from '../../theme';
 
@@ -75,6 +76,12 @@ export const ReceiptUploadScreen: React.FC<any> = ({ navigation }) => {
   };
 
   const handleUploadAndScan = async () => {
+    const isOnline = await networkService.isOnline();
+    if (!isOnline) {
+      Alert.alert('Network Required', 'Receipt upload and OCR extraction require an active internet connection.');
+      return;
+    }
+
     if (!selectedImage) {
       setError('Please select or capture a receipt image first.');
       return;
